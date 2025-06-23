@@ -1,4 +1,31 @@
+This is the one to use:
 \b10\.\s?\d{4,9}\/[-._()<>;\/:A-Za-z0-9]+\s?(?![A-Z]+)+[-._()<>;\/:A-Za-z0-9]+
+\b10\.\s?\d{4,9}\/[-._()<>;\/:A-Za-z0-9]+\s?(?![A-Z]+)+[-._()<>;\/:A-Za-z0-9]+
+\b10\.\s?\d{4,9}/[^\s"\'<>]+[^\s"\'<>.,;:?!)]
+
+Sample text for testing: (https://regex101.com/)
+https://doi.org/10.1016/S1350-4487(02)00170-1
+Dunai
+
+egel, D. A., Maritorena, S., Nelson, N. B., & Behrenfeld, M. J. (2005). Independence and interdependencies among global ocean color prop-
+erties: Reassessing the bio-optical assumption. Journal of Geophysical Research, 110(C7). https://doi.org/10.1029/2004JC002527
+Siokou-Frangou, I., Christaki, U., Mazzocchi, M. G., Montresor, M., Ribera D’Alcala, M., Vaque, D., & Z
+
+https://doi.org/10.1130/0091-7613(2003)
+031<0055:PAGPSE>2.0.CO;2 
+
+MATCHED: 'https://doi.org/10.1130/0091-7613(2003))' -> Found: '10.1130/0091-7613(2003))'
+MATCHED: 'Another DOI 10.5555/some(value). ending with dot.' -> Found: '10.5555/some(value)'
+MATCHED: '10.1234/justtext.' -> Found: '10.1234/justtext'
+MATCHED: '10.1234/text-with-hyphen_and.dot' -> Found: '10.1234/text-with-hyphen_and.dot'
+MATCHED: '10.1234/text-with-hyphen_and.dotMORETEXT' -> Found: '10.1234/text-with-hyphen_and.dot'
+
+The  data  that 
+support the findings of this study have been deposited in Dryad with 
+doi:https://doi.org/10.5061/dryad.37pvm cvgb.
+
+
+
 
 This is close:
 \b10\.\d{4,9}\/[-._()<>;\/:A-Za-z0-9\s]+\b
@@ -69,4 +96,31 @@ tion of a recently identified Quaternary fault in Western Australia:
 the Dumbleyung Fault. Proceedings of the Australian Earthquake
 Engineering Society, Canberra ACT, November 2006: 189–194.
 KING ET AL. 1253 10969837, 2021, 7, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/esp.5090, Wiley Online Library on [31/03/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+
+The  data  that 
+support the findings of this study have been deposited in Dryad with 
+doi:https://doi.org/10.5061/dryad.37pvm cvgb.
+ORCID
+Ayub M. O. Oduor  https://orcid.org/0000-0001-6714-5253 
+Robin Pouteau  https://orcid.org/0000-0003-3090-6551 
+Junmin Li  https://orcid.org/0000-0001-8244-0461 
+REFERENCES
+Abhilasha, D., Quintana, N., Vivanco, J., & Joshi, J. (2008). Do allelo-
+pathic compounds in invasive Solidago  canadensis s.l. restrain the 
+native European flora? Journal of Ecology, 96, 993–1001. https://doi.
+org/10.1111/j.1365-2745.2008.01413.x
+Benelli, G., Pavela, R., Cianfaglione, K., Nagy, D. U., Canale, A., & Maggi, 
+F.  (2019).  Evaluation  of  two  invasive  plant  invaders  in  Europe 
+(Solidago canadensis and Solidago gigantea) as possible sources of bo-
+tanical insecticides. Journal of Pest Science, 92, 805–821. https://doi.
+org/10.1007/s1034 0-018-1034-5
+Broennimann,  O.,  Fitzpatrick,  M.  C.,  Pearman,  P.  B.,  Petitpierre,  B., 
+Pellissier, L., Yoccoz, N. G., ... Guisan, A. (2012). Measuring eco-
+logical  niche  overlap  from  occurrence  and  spatial  environmental 
+data.  Global Ecology and Biogeography,  21,  481–497.  https://doi.
+org/10.1111/j.1466-8238.2011.00698.x
+Broennimann, O., Mráz, P., Petitpierre, B., Guisan, A., & Müller-Schärer, 
+H.  (2014).  Contrasting  spatio-temporal  climatic  niche  dynamics 
+during the eastern and western invasions of spotted knapweed in  20457758, 2020, 12, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/ece3.6303, Wiley Online Library on [31/03/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
 
