@@ -1,0 +1,72 @@
+\b10\.\s?\d{4,9}\/[-._()<>;\/:A-Za-z0-9]+\s?(?![A-Z]+)+[-._()<>;\/:A-Za-z0-9]+
+
+This is close:
+\b10\.\d{4,9}\/[-._()<>;\/:A-Za-z0-9\s]+\b
+
+This is better but not quite right:
+\b10\.\s?\d{4,9}\/[-._()<>;\/:A-Za-z0-9\s]+[-._()<>;\/:0-9]+
+\b10\.\s?\d{4,9}\/[-._()<>;\/:A-Za-z0-9\s]+[-._()<>;\/:0-9]+
+
+Try this:
+\b10\.\d{4,9}/[-._();/:A-Za-z0-9]+(?![._();/:A-Za-z0-9])
+
+But need to replace all spaces with blanks and join lines.
+
+https://doi.org/10.1016/S1350-4487(02)00170-1
+Dunai
+
+https://doi.org/10.1130/0091-7613(2003)
+031<0055:PAGPSE>2.0.CO;2 
+
+egel, D. A., Maritorena, S., Nelson, N. B., & Behrenfeld, M. J. (2005). Independence and interdependencies among global ocean color prop-
+erties: Reassessing the bio-optical assumption. Journal of Geophysical Research, 110(C7). https://doi.org/10.1029/2004JC002527
+Siokou-Frangou, I., Christaki, U., Mazzocchi, M. G., Montresor, M., Ribera D’Alcala, M., Vaque, D., & Z
+
+
+
+Processing article 1/55: 10.1002_2017jc013030.pdf
+Found 12 potential dataset(s)/DOI(s) in 10.1002_2017jc013030: ['10.5194/os-11-759-2015', '10.13155/39459', '10.13155/35385', '10.17882/47142', '10.5194/bg-5-353-2008', '10.1016/j.rse', '10.17882/49388', '10.1016/j.dsr2.2006.01.029', '10.1002/2017JC013030', '10.1016/j.rse.2016.08', '10.13155/33951', '10.1029/2004JC002378']
+
+
+
+Xing, X., Claustre, H., Boss, E., Roesler, C., Organelli, E., Poteau, A., ...D’Ortenzio, F. (2016). Correction of profiles of in-situ chlorophyll fluo-
+rometry for the contribution of fluorescence originating from non-algal matter. Limnology and Oceanography: Methods, 15(1), 80–93.
+https://doi.org/10.1002/lom3.10144
+Xing, X., Claustre, H., Uitz, J., Mignot, A., Poteau, A., & Wang, H. (2014). Seasonal variations of bio-optical properties and their interrelation-
+ships observed by Bio-Argo floats in the subpolar North Atlantic. Journal of Geophysical Research: Oceans, 119(10), 7372–7388. https://
+doi.org/10.1002/2014JC010189
+Xing, X., Morel, A., Claustre, H., Antoine, D., D’Ortenzio, F., Poteau, A., & Mignot, A. (2011). Combined processing and mutual interpretation
+of radiometry and fluorimetry from autonomous profiling Bio-Argo floats: Chlorophyll a retrieval. Journal of Geophysical Research,
+116(C6). https://doi.org/10.1029/2010JC006899
+Yentsch, C. S., & Phinney, D. A. (1989). A bridge between ocean optics and microbial ecology. Limnology and Oceanography, 34(8), 1694–
+1705. https://doi.org/10.4319/lo.1989.34.8.1694
+Zhang, X., Hu, L., & He, M.-X. (2009). Scattering by pure seawater: Effect of salinity. Optics Express, 17(7), 5698–5710. https://doi.org/10.1364/
+OE.17.012685
+Journal of Geophysical Research: Oceans 10.1002/2017JC013030
+BARBIEUX ET AL. 1250
+
+
+Dixon, T.H., Norabuena, E. & Hotaling, L. (2003) Paleoseismology and
+global positioning system: Earthquake-cycle effects and geodetic
+versus geologic fault slip rates in the eastern California shear zone.
+Geology, 31(1), 55–58. https://doi.org/10.1130/0091-7613(2003)
+031<0055:PAGPSE>2.0.CO;2
+Duller, G.A.T. (2003) Distinguishing quartz and feldspar in single grain
+luminescence measurements. Radiation Measurements, 37(2),
+161–165. https://doi.org/10.1016/S1350-4487(02)00170-1
+Dunai, T.J. & Stuart, F.M. (2009) Reporting of cosmogenic nuclide data for
+exposure age and erosion rate determinations. Quaternary Geochro-
+nology, 4, 437–440. https://doi.org/10.1016/j.quageo.2009.04.003
+Edgoose, C.J., Scrimgeour, I.R. & Close, D.F. (2004) Geology of the
+Musgrave Block, Northern Territory (NTGS Report 15). In:
+Munson, T.J. (Ed.) Darwin, NT: Northern Territory Geological Survey.
+Ekström, G., Nettles, M. & Dziewonski, A.M. (2012) The global CMT pro-
+ject 2004-2010: Centroid-moment tensors for 13,017 earthquakes.
+Physics of the Earth and Planetary Interiors, 200–201, 1–9. https://
+doi.org/10.1016/j.pepi.2012.04.002
+Estrada B, Clark D, Wyrwoll K-H, Dentith M. 2006. Paleoseismic investiga-
+tion of a recently identified Quaternary fault in Western Australia:
+the Dumbleyung Fault. Proceedings of the Australian Earthquake
+Engineering Society, Canberra ACT, November 2006: 189–194.
+KING ET AL. 1253 10969837, 2021, 7, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/esp.5090, Wiley Online Library on [31/03/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+

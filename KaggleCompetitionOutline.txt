@@ -1,0 +1,957 @@
+Okay, Jim, this is an interesting and challenging project, especially with the offline Kaggle constraint! Using an LLM like Qwen for the classification part is a good idea, given the nuanced understanding required to distinguish between "Primary" and "Secondary" dataset usage. Your labeled training data will be very valuable if you decide to fine-tune, or even for few-shot prompting.
+
+Here's a structured plan for your Python notebook, keeping the offline Kaggle environment and your requirements in mind:
+
+Project Title: Article Dataset Usage Analyzer (Offline Kaggle)
+
+Goal: Extract dataset IDs/DOIs from PDF/XML articles and classify their usage as "Primary," "Secondary," or "Missing."
+
+Core Components:
+
+1. Environment Setup (Offline):
+  - Necessary Python libraries (e.g., 
+
+```
+pandas
+```
+
+, 
+
+```
+PyMuPDF
+```
+
+ for PDFs, 
+
+```
+xml.etree.ElementTree
+```
+
+ for XML, 
+
+```
+transformers
+```
+
+, 
+
+```
+torch
+```
+
+, 
+
+```
+accelerate
+```
+
+ for Qwen). These will need to be added as Kaggle Datasets (e.g., wheel files for PyMuPDF, or the Hugging Face model files for Qwen).
+  - Qwen model files (weights, tokenizer config, etc.) added as a Kaggle Dataset.
+  - Your research articles (PDFs, XMLs) added as a Kaggle Dataset.
+  - Your labeled training data (
+
+```
+.csv
+```
+
+ or similar) added as a Kaggle Dataset.
+2. Data Loading and Preprocessing:
+  - Functions to read text from PDF files.
+  - Functions to read text from XML files.
+  - Function to load your labeled training data (if used for fine-tuning or evaluation).
+3. Information Extraction (IE):
+  - Function to extract DOIs from text (you can adapt your 
+
+```
+extract_doi_flexible
+```
+
+ function).
+  - Strategy for identifying other "dataset\_ids": This is trickier. Dataset IDs can be DOIs, accession numbers (e.g., GenBank, GEO), URLs to repositories (Dryad, Figshare, Zenodo), or custom IDs.
+    - Option A (Simpler): Focus primarily on DOIs as dataset identifiers.
+    - Option B (More Complex): Develop regexes for common dataset repositories or accession number formats.
+    - Option C (LLM-assisted IE): Potentially use the LLM to also help identify dataset mentions beyond just DOIs, though this adds complexity to the prompting.
+4. LLM-based Classification:
+  - Load the offline Qwen model and tokenizer.
+  - Prompt Engineering (Crucial):
+    - For each article and each identified dataset ID/DOI:
+      - Provide the LLM with:
+        - The full text of the article (or relevant sections like "Methods," "Data Availability," "Results").
+        - Example Prompt Snippet:
+
+FileEditView
+
+Copy
+
+Focus
+
+```
+Context: [Full article text or relevant sections]
+Dataset Identifier: [e.g., 10.5061/dryad.2bs69]
+
+Based on the provided article text, was the dataset identified as "[Dataset Identifier]" created by the authors specifically for the research described in this article, or was it an existing dataset that the authors used for their research?
+Respond with only one word: "Primary" or "Secondary".
+- "Primary": If the authors created this dataset as part of this study.
+- "Secondary": If the authors used this pre-existing dataset.
+```
+        - Few-Shot Prompting (Optional but Recommended if not fine-tuning initially):
+          - Include 2-3 examples from your training data directly in the prompt before the actual question to guide the LLM.
+  - Fine-Tuning (If initial prompting is insufficient and resources allow):
+    - Prepare your training data in the format required by the Qwen model for fine-tuning (usually a specific JSONL format with prompt/completion pairs).
+    - Write a fine-tuning script. This is a more involved step.
+    - Recommendation: Start with zero-shot or few-shot prompting. If performance is inadequate, then explore fine-tuning.
+5. Output Generation:
+  - Store results in a pandas DataFrame: 
+
+```
+article_id
+```
+
+, 
+
+```
+dataset_id_found
+```
+
+, 
+
+```
+doi_found
+```
+
+ (can be same as dataset\_id), 
+
+```
+classification_label
+```
+
+ ("Primary", "Secondary", "Missing").
+  - Handle the "Missing" case: If no dataset IDs/DOIs are found in an article after the IE step, label that article as "Missing."
+
+Notebook Structure (Python):
+
+python
+
+FileEditView
+
+Copy
+
+Focus
+
+```
+# --- 0. Kaggle Environment Check & Setup ---
+# This cell is mostly for documentation in an offline environment.
+# You'd ensure these are available via Kaggle Datasets.
+# Example:
+# QWEN_MODEL_PATH = "/kaggle/input/qwen-7b-chat/" # Path to your Qwen model dataset
+# PDF_LIB_PATH = "/kaggle/input/pymupdf-whl/" # Path to PyMuPDF wheel
+# ARTICLES_PATH = "/kaggle/input/my-research-articles/"
+# TRAINING_DATA_PATH = "/kaggle/input/my-training-data/training_data.csv"
+
+# --- 1. Imports ---
+import os
+import glob
+import re
+import pandas as pd
+import xml.etree.ElementTree as ET
+
+# For PDF (ensure PyMuPDF is installed from the wheel if internet is off)
+try:
+import fitz  # PyMuPDF
+except ImportError:
+print("PyMuPDF (fitz) not found. Please ensure it's installed from a wheel in offline mode.")
+fitz = None
+
+# For LLM (Qwen)
+try:
+from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch
+except ImportError:
+print("Transformers or PyTorch not found. Ensure they are available.")
+AutoModelForCausalLM, AutoTokenizer, torch = None, None, None
+
+# --- Configuration ---
+# Paths to your model and data (adjust if using Kaggle datasets)
+# These would point to /kaggle/input/...
+QWEN_MODEL_NAME_OR_PATH = "/kaggle/input/qwen-model-files/qwen-7b-chat" # Example
+ARTICLES_DIR = "/kaggle/input/research-articles-dataset/articles/" # Contains your PDF/XML files
+OUTPUT_CSV_PATH = "/kaggle/working/article_dataset_classification.csv"
+
+# --- 2. Helper Functions: Data Loading & Preprocessing ---
+
+def read_pdf_text(pdf_path):
+"""Extracts all text from a PDF file."""
+if not fitz:
+    print("PDF processing skipped: PyMuPDF not available.")
+    return None
+try:
+    doc = fitz.open(pdf_path)
+    text = ""
+    for page in doc:
+        text += page.get_text()
+    doc.close()
+    return text
+except Exception as e:
+    print(f"Error reading PDF {pdf_path}: {e}")
+    return None
+
+def read_xml_text(xml_file_path):
+"""Reads and concatenates all text content from an XML file."""
+# Using your previously developed function
+all_text_parts = []
+try:
+    tree = ET.parse(xml_file_path)
+    root = tree.getroot()
+    for element in root.iter():
+        if element.text:
+            cleaned_text = element.text.strip()
+            if cleaned_text:
+                all_text_parts.append(cleaned_text)
+        if element.tail:
+            cleaned_tail = element.tail.strip()
+            if cleaned_tail:
+                all_text_parts.append(cleaned_tail)
+    return " ".join(all_text_parts) if all_text_parts else ""
+except Exception as e:
+    print(f"Error reading XML {xml_file_path}: {e}")
+    return None
+
+# --- 3. Helper Functions: Information Extraction ---
+
+def extract_dois_from_text(text):
+"""
+Extracts DOIs from text using a flexible regex.
+(This would use your modified extract_doi_flexible logic,
+ but here we'll just use a general DOI regex for simplicity in this plan)
+"""
+if not text:
+    return []
+# A common DOI regex pattern (simplified for this example)
+# You should use your more robust `extract_doi_flexible` logic here.
+# For example, to find any string starting with 10. followed by numbers/dots/slashes
+doi_pattern = r'\b10\.\d{4,9}/[-._;()/:A-Za-z0-9]+\b'
+
+# If using your specific /dryad. logic, integrate it here or adapt the regex
+# For now, let's assume a simpler extraction for planning.
+# Example:
+# potential_dois = re.findall(doi_pattern, text)
+# processed_dois = []
+# for doi_candidate in potential_dois:
+#     # Apply your /dryad. logic if needed
+#     # This is a placeholder for your more complex DOI extraction
+#     dryad_marker = "/dryad."
+#     dryad_index = doi_candidate.find(dryad_marker)
+#     if dryad_index != -1:
+#         prefix = doi_candidate[:dryad_index]
+#         start_of_suffix = dryad_index + len(dryad_marker)
+#         suffix_part = doi_candidate[start_of_suffix : start_of_suffix + 5]
+#         processed_dois.append(prefix + dryad_marker + suffix_part)
+#     else:
+#         processed_dois.append(doi_candidate)
+# return list(set(processed_dois)) # Unique DOIs
+
+# Simplified for this plan:
+return list(set(re.findall(doi_pattern, text)))
+
+def extract_dataset_ids(text, extracted_dois):
+"""
+Identifies dataset IDs. For now, let's assume dataset_ids are primarily the DOIs found.
+This function can be expanded with more regexes for other ID types.
+"""
+# For this version, we'll consider all found DOIs as potential dataset_ids
+# You might want to add more sophisticated logic here to find non-DOI dataset IDs
+return extracted_dois 
+
+# --- 4. Helper Functions: LLM Classification ---
+
+# Global LLM model and tokenizer (load once)
+llm_model = None
+llm_tokenizer = None
+device = "cuda" if torch and torch.cuda.is_available() else "cpu"
+
+def load_llm():
+global llm_model, llm_tokenizer
+if not AutoModelForCausalLM or not QWEN_MODEL_NAME_OR_PATH:
+    print("LLM components not available or path not set. Skipping LLM loading.")
+    return False
+try:
+    print(f"Loading Qwen tokenizer from: {QWEN_MODEL_NAME_OR_PATH}")
+    llm_tokenizer = AutoTokenizer.from_pretrained(QWEN_MODEL_NAME_OR_PATH, trust_remote_code=True)
+    print(f"Loading Qwen model from: {QWEN_MODEL_NAME_OR_PATH}")
+    llm_model = AutoModelForCausalLM.from_pretrained(
+        QWEN_MODEL_NAME_OR_PATH,
+        device_map="auto", # Automatically uses GPU if available
+        trust_remote_code=True
+    ).eval() # Set to evaluation mode
+    print(f"LLM loaded successfully on {llm_model.device}.")
+    return True
+except Exception as e:
+    print(f"Error loading LLM: {e}")
+    return False
+
+def generate_llm_classification(article_text_snippet, dataset_id):
+"""
+Uses the LLM to classify dataset usage.
+article_text_snippet: A relevant portion of article text, or full text if manageable.
+"""
+if not llm_model or not llm_tokenizer:
+    print("LLM not loaded. Cannot classify.")
+    return "Error: LLM not loaded"
+
+prompt = f"""
+You are an expert research assistant. Your task is to determine how a dataset was used in a research article.
+Read the following article context and the dataset identifier carefully.
+
+Article Context (excerpt):
+"{article_text_snippet[:4000]}"  # Truncate for context window, adjust as needed
+
+Dataset Identifier: "{dataset_id}"
+
+Question: Based on the provided article context, was the dataset (identified as "{dataset_id}"):
+1. Created by the authors primarily for the research described in THIS article? (If so, it's "Primary")
+2. An existing dataset that the authors obtained and used for their research in THIS article? (If so, it's "Secondary")
+
+Please respond with only one word: "Primary" or "Secondary".
+"""
+
+# This is a simplified generation example for Qwen.
+# You'll need to adapt this to the specific chat/completion format Qwen expects.
+# For many chat models, it's a list of messages:
+# messages = [{"role": "user", "content": prompt}]
+# inputs = llm_tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt").to(device)
+
+# Simpler non-chat completion style (check Qwen docs for best practice):
+inputs = llm_tokenizer(prompt, return_tensors="pt", truncation=True, max_length=llm_tokenizer.model_max_length - 50).to(llm_model.device) # Reserve some tokens for generation
+
+try:
+    with torch.no_grad(): # Important for inference
+        outputs = llm_model.generate(
+            **inputs,
+            max_new_tokens=10, # We only expect "Primary" or "Secondary"
+            pad_token_id=llm_tokenizer.eos_token_id # Important for some models
+        )
+
+    # Decode the generated tokens, skipping special tokens and the prompt
+    response_text = llm_tokenizer.decode(outputs[0][inputs['input_ids'].shape[1]:], skip_special_tokens=True).strip()
+
+    print(f"LLM raw response for {dataset_id}: '{response_text}'")
+
+    if "Primary" in response_text:
+        return "Primary"
+    elif "Secondary" in response_text:
+        return "Secondary"
+    else:
+        print(f"Warning: LLM response for {dataset_id} not clearly Primary/Secondary: '{response_text}'")
+        return "Uncertain" # Or handle as per your logic
+
+except Exception as e:
+    print(f"Error during LLM generation for {dataset_id}: {e}")
+    return "Error: LLM generation failed"
+
+# --- 5. Main Processing Logic ---
+def process_articles(articles_directory):
+results = []
+
+if not load_llm(): # Attempt to load LLM once
+    print("Proceeding without LLM classification.")
+
+article_files = glob.glob(os.path.join(articles_directory, "*.pdf")) + \
+                glob.glob(os.path.join(articles_directory, "*.xml"))
+
+for i, filepath in enumerate(article_files):
+    print(f"\nProcessing article {i+1}/{len(article_files)}: {os.path.basename(filepath)}")
+    article_id = os.path.splitext(os.path.basename(filepath))[0]
+    text_content = None
+
+    if filepath.endswith(".pdf"):
+        text_content = read_pdf_text(filepath)
+    elif filepath.endswith(".xml"):
+        text_content = read_xml_text(filepath)
+
+    if not text_content:
+        print(f"Could not extract text from {filepath}. Skipping.")
+        results.append({
+            "article_id": article_id,
+            "dataset_id_found": "N/A",
+            "doi_found": "N/A",
+            "classification_label": "Error: No text"
+        })
+        continue
+
+    # Extract DOIs and other potential dataset IDs
+    extracted_dois = extract_dois_from_text(text_content)
+    dataset_ids_found = extract_dataset_ids(text_content, extracted_dois) # Currently just uses DOIs
+
+    if not dataset_ids_found:
+        print(f"No dataset IDs/DOIs found in {article_id}.")
+        results.append({
+            "article_id": article_id,
+            "dataset_id_found": "None",
+            "doi_found": "None",
+            "classification_label": "Missing"
+        })
+    else:
+        print(f"Found {len(dataset_ids_found)} potential dataset(s)/DOI(s) in {article_id}: {dataset_ids_found}")
+        for ds_id in dataset_ids_found:
+            # For LLM classification, provide context.
+            # You might want to be more selective about the text snippet.
+            # For now, using the beginning of the text.
+            classification = "LLM_Disabled"
+            if llm_model and llm_tokenizer: # Check if LLM is loaded
+                classification = generate_llm_classification(text_content, ds_id)
+
+            # Determine associated DOI (might be the same as ds_id if it's a DOI)
+            # This logic might need refinement based on how ds_id is defined
+            doi_for_dataset = ds_id if re.match(r"^10\.", ds_id) else "N/A (Non-DOI ID)"
+
+            results.append({
+                "article_id": article_id,
+                "dataset_id_found": ds_id,
+                "doi_found": doi_for_dataset, 
+                "classification_label": classification
+            })
+return pd.DataFrame(results)
+
+# --- 6. Execution ---
+if __name__ == "__main__":
+# Ensure the ARTICLES_DIR exists or adjust path
+if not os.path.isdir(ARTICLES_DIR):
+    print(f"Articles directory not found: {ARTICLES_DIR}")
+    print("Please create dummy files or point to a valid directory for testing.")
+    # Create dummy files for a quick test if ARTICLES_DIR is missing
+    # This part is for local testing, remove or adapt for Kaggle
+    if ARTICLES_DIR == "/kaggle/input/research-articles-dataset/articles/": # Be careful with this
+         print("Cannot create dummy files in /kaggle/input. Please provide data via Kaggle Datasets.")
+    else: # Local testing
+        os.makedirs(ARTICLES_DIR, exist_ok=True)
+        with open(os.path.join(ARTICLES_DIR, "article1.pdf"), "w") as f: f.write("Dummy PDF with DOI 10.1234/foo.bar and dataset created by us.") # Needs actual PDF content
+        with open(os.path.join(ARTICLES_DIR, "article2.xml"), "w") as f: f.write("<root><text>Used dataset 10.5678/baz.qux from another study.</text></root>")
+
+print("Starting article processing...")
+df_results = process_articles(ARTICLES_DIR)
+
+print("\n--- Results ---")
+print(df_results.head())
+
+df_results.to_csv(OUTPUT_CSV_PATH, index=False)
+print(f"\nResults saved to {OUTPUT_CSV_PATH}")
+
+# If you have training data, you can load it here and compare/evaluate
+# Example:
+# if os.path.exists(TRAINING_DATA_PATH):
+#     df_train = pd.read_csv(TRAINING_DATA_PATH)
+#     print("\nTraining Data Head:")
+#     print(df_train.head())
+#     # ... further evaluation logic ...
+```
+
+Key Considerations for Offline Kaggle:
+
+1. PyMuPDF (
+
+```
+fitz
+```
+
+): This library has C bindings. You'll need to find a Linux wheel file (
+
+```
+.whl
+```
+
+) compatible with the Kaggle environment (usually 
+
+```
+manylinux
+```
+
+), add it as a Kaggle Dataset, and then install it using 
+
+```
+pip install /kaggle/input/your-pymupdf-dataset/pymupdf.whl --no-index --find-links /kaggle/input/your-pymupdf-dataset/
+```
+
+.
+2. Qwen Model: Download the model files (weights, 
+
+```
+config.json
+```
+
+, 
+
+```
+tokenizer_config.json
+```
+
+, etc.) from Hugging Face. Create a Kaggle Dataset with these files. In your notebook, 
+
+```
+QWEN_MODEL_NAME_OR_PATH
+```
+
+ will point to the directory of this dataset (e.g., 
+
+```
+/kaggle/input/my-qwen-model/
+```
+
+).
+3. Transformers & Torch: These are usually pre-installed in Kaggle Python environments. If not, or if you need a specific version, you might also need to add their wheel files as datasets.
+4. Internet Off: Double-check that all 
+
+```
+from_pretrained()
+```
+
+ calls for models and tokenizers point to local paths within your Kaggle datasets. No Hugging Face Hub downloads should occur.
+5. Training Data: If you use it for fine-tuning, the fine-tuning script itself will need to be part of your notebook or a utility script, and it must also run offline.
+6. LLM Context Window: Be mindful of the Qwen model's context window size. Full article texts can be very long. You might need to pass only relevant sections (e.g., Abstract, Methods, Data Availability Statement, Results sections discussing data) or use techniques to summarize/chunk text if it's too large. The example truncates at 4000 characters.
+7. Dataset ID Extraction: The current plan simplifies 
+
+```
+extract_dataset_ids
+```
+
+ to just use DOIs. If your 
+
+```
+dataset_id
+```
+
+ in the training data is often something else (e.g., a repository-specific ID like "Dryad.123"), you'll need to enhance this function with more regexes or a more sophisticated IE approach.
+8. LLM Output Parsing: The 
+
+```
+generate_llm_classification
+```
+
+ function tries to parse "Primary" or "Secondary". Make the prompt very specific about the desired output format to make parsing reliable.
+
+This plan provides a comprehensive starting point. You'll likely need to iterate on the IE part and the LLM prompting/fine-tuning to achieve good accuracy. Good luck, Jim!
+
+
+
+
+
+
+
+
+Okay, Jim, let's break down how you could approach both fine-tuning a Qwen model with your labeled data and how to use that data directly for few-shot prompting.
+
+Important Notes for Offline Kaggle:
+
+- Model Size & Resources: Fine-tuning LLMs, even smaller ones, can be resource-intensive (RAM, GPU VRAM, time). For Kaggle notebooks, you'll likely want to use one of the smaller Qwen variants (e.g., Qwen1.5-0.5B-Chat, Qwen1.5-1.8B-Chat, or Qwen1.5-4B-Chat if resources permit). Full pre-training is out of scope for a notebook.
+- Offline Dependencies:
+  - The Qwen model files (weights, tokenizer, config).
+  - Your training data CSV.
+  - Libraries like 
+
+```
+transformers
+```
+
+, 
+
+```
+torch
+```
+
+, 
+
+```
+datasets
+```
+
+, 
+
+```
+accelerate
+```
+
+, and 
+
+```
+trl
+```
+
+ (for Supervised Fine-Tuning). These need to be available as Kaggle Datasets (e.g., wheel files or pre-installed).
+- Saving Fine-tuned Model: You can save the fine-tuned model to 
+
+```
+/kaggle/working/
+```
+
+. After your session, you can create a new Kaggle Dataset from these output files to use your custom model in other notebooks.
+
+Part 1: Fine-tuning Qwen with Your Labeled Data
+
+This process involves preparing your data, setting up the trainer, running the fine-tuning, and saving the model. We'll use the 
+
+```
+SFTTrainer
+```
+
+ from the 
+
+```
+trl
+```
+
+ library, which is convenient for supervised fine-tuning.
+
+1.A. Data Preparation for Fine-tuning
+
+Your training data (
+
+```
+article_id, dataset_id, label
+```
+
+) needs to be transformed into a format suitable for the 
+
+```
+SFTTrainer
+```
+
+. This usually means creating a text string for each example that includes the instruction, context (article snippet), the specific question about the dataset ID, and the expected answer, formatted in the way the chat model expects (e.g., ChatML for Qwen).
+
+python
+
+FileEditView
+
+Copy
+
+Focus
+
+```
+import pandas as pd
+from datasets import Dataset # Hugging Face datasets library
+
+# --- Configuration (Adjust these paths for Kaggle) ---
+TRAINING_CSV_PATH = "/kaggle/input/your-training-data/training_data.csv" # Your labeled data
+BASE_MODEL_PATH = "/kaggle/input/qwen-base-model/qwen1.5-1.8b-chat" # Path to base Qwen model
+FINE_TUNED_MODEL_OUTPUT_DIR = "/kaggle/working/qwen_finetuned_dataset_classifier"
+
+# --- Dummy function to get article text (replace with your actual logic) ---
+# In a real scenario, you'd fetch this from your PDF/XML parsing pipeline
+# For this example, we'll use a placeholder.
+def get_article_snippet_for_id(article_id, max_length=1000):
+# This is a placeholder. You need to implement this based on how you store/access article texts.
+# It should return a relevant text snippet for the given article_id.
+# Example:
+# if article_id == "article123":
+#    return "This is the text for article123... The authors developed dataset XYZ (10.123/xyz) for this work..."
+# else:
+#    return "Some generic article text snippet mentioning a dataset."
+# For demonstration, let's create some dummy text based on the ID.
+return f"This is a sample text for article {article_id}. It discusses various datasets. We are interested in one specific dataset. The methods section details data collection. This study presents new findings based on data."[:max_length]
+
+def create_finetuning_prompt_chatml(article_snippet, dataset_id, label):
+"""
+Creates a prompt in Qwen's ChatML format for fine-tuning.
+The SFTTrainer will handle masking the prompt part for loss calculation.
+"""
+user_message = f"""
+Article Context (excerpt):
+"{article_snippet}"
+
+Dataset Identifier: "{dataset_id}"
+
+Question: Based on the provided article context, was the dataset (identified as "{dataset_id}"):
+1. Created by the authors primarily for the research described in THIS article? (If so, it's "Primary")
+2. An existing dataset that the authors obtained and used for their research in THIS article? (If so, it's "Secondary")
+
+Please respond with only one word: "Primary" or "Secondary".
+"""
+# ChatML format
+return f"<|im_start|>system\nYou are an expert research assistant.<|im_end|>\n<|im_start|>user\n{user_message.strip()}<|im_end|>\n<|im_start|>assistant\n{label}<|im_end|>"
+
+# Load your training data
+df_train = pd.read_csv(TRAINING_CSV_PATH)
+
+# Prepare data for SFTTrainer
+formatted_texts = []
+for _, row in df_train.iterrows():
+article_id = row['article_id']
+dataset_id = row['dataset_id']
+label = row['label'] # "Primary" or "Secondary"
+
+article_snippet = get_article_snippet_for_id(article_id) # Get relevant text
+
+if not article_snippet: # Skip if no text found for the article
+    print(f"Warning: No article snippet found for {article_id}. Skipping this training example.")
+    continue
+
+formatted_texts.append({"text": create_finetuning_prompt_chatml(article_snippet, dataset_id, label)})
+
+if not formatted_texts:
+raise ValueError("No training data could be formatted. Check `get_article_snippet_for_id` and your CSV.")
+
+# Convert to Hugging Face Dataset
+train_dataset = Dataset.from_list(formatted_texts)
+print(f"Prepared {len(train_dataset)} examples for fine-tuning.")
+print("Example formatted training instance:")
+print(train_dataset[0]['text'])
+```
+
+1.B. Fine-tuning Script
+
+python
+
+FileEditView
+
+Copy
+
+Focus
+
+```
+# Ensure these libraries are available offline in your Kaggle environment
+from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
+from trl import SFTTrainer
+import torch
+
+# --- Fine-tuning ---
+if torch.cuda.is_available():
+device = torch.device("cuda")
+print(f"Using GPU: {torch.cuda.get_device_name(0)}")
+else:
+device = torch.device("cpu")
+print("Using CPU. Fine-tuning will be very slow.")
+
+try:
+# Load tokenizer and model
+print(f"Loading base model and tokenizer from: {BASE_MODEL_PATH}")
+tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_PATH, trust_remote_code=True)
+# Qwen specific: if no pad token, set to eos token
+if tokenizer.pad_token is None:
+    tokenizer.pad_token = tokenizer.eos_token
+    print("Set tokenizer.pad_token to tokenizer.eos_token")
+
+model = AutoModelForCausalLM.from_pretrained(
+    BASE_MODEL_PATH,
+    trust_remote_code=True,
+    torch_dtype=torch.bfloat16 if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else torch.float32, # Use bfloat16 if supported for efficiency
+    device_map="auto" # Automatically use GPU if available
+)
+print(f"Model loaded on device: {model.device}")
+
+# --- Training Arguments ---
+# These are example arguments. Adjust them based on your dataset size, resources, and desired training time.
+# For Kaggle, num_train_epochs might be small (e.g., 1-3).
+# `per_device_train_batch_size` should be small if VRAM is limited (e.g., 1 or 2).
+# `gradient_accumulation_steps` can help simulate a larger batch size.
+training_args = TrainingArguments(
+    output_dir=f"{FINE_TUNED_MODEL_OUTPUT_DIR}/checkpoints",
+    num_train_epochs=1,  # Start with 1 epoch for testing
+    per_device_train_batch_size=1, # Adjust based on VRAM
+    gradient_accumulation_steps=4, # Effective batch size = 1 * 4 = 4
+    learning_rate=2e-5,
+    logging_steps=10,
+    save_steps=50, # Save checkpoints periodically
+    fp16=torch.cuda.is_available() and not torch.cuda.is_bf16_supported(), # Use fp16 if bfloat16 not available but CUDA is
+    bf16=torch.cuda.is_available() and torch.cuda.is_bf16_supported(), # Use bfloat16 if available
+    optim="paged_adamw_8bit", # Or "adamw_torch" if bitsandbytes not available/working
+    # report_to="none", # If you don't want to log to wandb/tensorboard etc.
+    # max_steps=100, # Optionally limit total training steps for a quick test
+)
+
+# --- Initialize SFTTrainer ---
+trainer = SFTTrainer(
+    model=model,
+    tokenizer=tokenizer,
+    train_dataset=train_dataset,
+    dataset_text_field="text",  # The key in your dataset that contains the formatted text
+    args=training_args,
+    max_seq_length=1024,  # Adjust based on your prompt length and model capacity
+    packing=False, # Set to True if your inputs are much shorter than max_seq_length and you want to pack them
+)
+
+print("Starting fine-tuning...")
+trainer.train()
+print("Fine-tuning completed.")
+
+# --- Save the fine-tuned model and tokenizer ---
+print(f"Saving fine-tuned model to: {FINE_TUNED_MODEL_OUTPUT_DIR}")
+trainer.save_model(FINE_TUNED_MODEL_OUTPUT_DIR) # Saves model and tokenizer
+# tokenizer.save_pretrained(FINE_TUNED_MODEL_OUTPUT_DIR) # SFTTrainer should save tokenizer too
+
+print(f"Model and tokenizer saved. You can now create a Kaggle dataset from the contents of '{FINE_TUNED_MODEL_OUTPUT_DIR}'.")
+
+except Exception as e:
+print(f"An error occurred during fine-tuning: {e}")
+import traceback
+traceback.print_exc()
+```
+
+To use the fine-tuned model later: You would point 
+
+```
+BASE_MODEL_PATH
+```
+
+ (or a new variable like 
+
+```
+FINE_TUNED_MODEL_PATH
+```
+
+) to 
+
+```
+/kaggle/input/your-finetuned-qwen-dataset/
+```
+
+ in your inference notebook.
+
+Part 2: Using Training Data Directly in the Prompt (Few-Shot Prompting)
+
+This method doesn't require fine-tuning. You select a few examples from your training data and prepend them to your actual query.
+
+python
+
+FileEditView
+
+Copy
+
+Focus
+
+```
+import random
+
+# --- Configuration (Adjust these paths for Kaggle) ---
+# TRAINING_CSV_PATH = "/kaggle/input/your-training-data/training_data.csv" # Already defined
+# BASE_MODEL_PATH = "/kaggle/input/qwen-base-model/qwen1.5-1.8b-chat" # Path to base Qwen model
+
+# --- Load base LLM (if not already loaded) ---
+# Assume llm_model and llm_tokenizer are loaded as in your previous script's `load_llm()` function.
+# For this example, let's redefine a simplified load function for clarity.
+_llm_model_fs = None
+_llm_tokenizer_fs = None
+_device_fs = "cuda" if torch and torch.cuda.is_available() else "cpu"
+
+def load_llm_for_fewshot(model_path):
+global _llm_model_fs, _llm_tokenizer_fs
+if _llm_model_fs and _llm_tokenizer_fs:
+    return True # Already loaded
+try:
+    print(f"Loading Qwen tokenizer from: {model_path}")
+    _llm_tokenizer_fs = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+    if _llm_tokenizer_fs.pad_token is None:
+         _llm_tokenizer_fs.pad_token = _llm_tokenizer_fs.eos_token
+    print(f"Loading Qwen model from: {model_path}")
+    _llm_model_fs = AutoModelForCausalLM.from_pretrained(
+        model_path, device_map="auto", trust_remote_code=True
+    ).eval()
+    print(f"LLM for few-shot loaded successfully on {_llm_model_fs.device}.")
+    return True
+except Exception as e:
+    print(f"Error loading LLM for few-shot: {e}")
+    return False
+
+# --- Load and Prepare Few-Shot Examples ---
+df_train_fs = pd.read_csv(TRAINING_CSV_PATH)
+few_shot_examples = []
+
+# Select a few diverse examples (e.g., 1 Primary, 1 Secondary)
+# You can make this selection more sophisticated
+primary_examples = df_train_fs[df_train_fs['label'] == 'Primary'].sample(n=min(1, len(df_train_fs[df_train_fs['label'] == 'Primary'])))
+secondary_examples = df_train_fs[df_train_fs['label'] == 'Secondary'].sample(n=min(1, len(df_train_fs[df_train_fs['label'] == 'Secondary'])))
+selected_examples_df = pd.concat([primary_examples, secondary_examples])
+
+for _, row in selected_examples_df.iterrows():
+article_snippet = get_article_snippet_for_id(row['article_id'], max_length=300) # Shorter snippets for examples
+if not article_snippet: continue
+
+# Using the ChatML format for consistency with Qwen
+example_user_message = f"""
+Article Context (excerpt):
+"{article_snippet}"
+Dataset Identifier: "{row['dataset_id']}"
+Question: Based on the provided article context, was the dataset (identified as "{row['dataset_id']}"):
+1. Created by the authors primarily for the research described in THIS article? (If so, it's "Primary")
+2. An existing dataset that the authors obtained and used for their research in THIS article? (If so, it's "Secondary")
+Please respond with only one word: "Primary" or "Secondary".
+"""
+example_chatml = f"<|im_start|>user\n{example_user_message.strip()}<|im_end|>\n<|im_start|>assistant\n{row['label']}<|im_end|>"
+few_shot_examples.append(example_chatml)
+
+print(f"Prepared {len(few_shot_examples)} few-shot examples.")
+
+# --- Modified Classification Function for Few-Shot ---
+def generate_llm_classification_few_shot(article_text_snippet, dataset_id, num_examples_to_use=2):
+if not _llm_model_fs or not _llm_tokenizer_fs:
+    if not load_llm_for_fewshot(BASE_MODEL_PATH): # Use the base model path
+         print("LLM not loaded for few-shot. Cannot classify.")
+         return "Error: LLM not loaded"
+
+# Construct the few-shot part of the prompt
+# Randomly select or take the first N examples
+current_few_shot_prompts = random.sample(few_shot_examples, min(num_examples_to_use, len(few_shot_examples)))
+
+few_shot_prompt_string = "\n".join(current_few_shot_prompts)
+
+# Construct the actual query for the current item
+query_user_message = f"""
+Article Context (excerpt):
+"{article_text_snippet[:3500]}" # Truncate for context window
+Dataset Identifier: "{dataset_id}"
+Question: Based on the provided article context, was the dataset (identified as "{dataset_id}"):
+1. Created by the authors primarily for the research described in THIS article? (If so, it's "Primary")
+2. An existing dataset that the authors obtained and used for their research in THIS article? (If so, it's "Secondary")
+Please respond with only one word: "Primary" or "Secondary".
+"""
+query_chatml_user_part = f"<|im_start|>user\n{query_user_message.strip()}<|im_end|>"
+
+# Combine into the full prompt using ChatML structure
+full_prompt_chatml = f"<|im_start|>system\nYou are an expert research assistant.<|im_end|>\n{few_shot_prompt_string}\n{query_chatml_user_part}\n<|im_start|>assistant\n"
+# The final <|im_start|>assistant\n signals the model to start its completion.
+
+# Tokenize and generate
+# Note: Qwen's `apply_chat_template` might be more robust if available and correctly configured for your version.
+# For direct string construction like above, ensure it matches the model's expected format.
+inputs = _llm_tokenizer_fs(full_prompt_chatml, return_tensors="pt", truncation=True, max_length=_llm_tokenizer_fs.model_max_length - 20).to(_llm_model_fs.device)
+
+try:
+    with torch.no_grad():
+        outputs = _llm_model_fs.generate(
+            **inputs,
+            max_new_tokens=10, # Expect "Primary" or "Secondary"
+            pad_token_id=_llm_tokenizer_fs.eos_token_id,
+            eos_token_id=_llm_tokenizer_fs.convert_tokens_to_ids("<|im_end|>") # Stop generation at <|im_end|>
+        )
+
+    # Decode only the generated part
+    response_text = _llm_tokenizer_fs.decode(outputs[0][inputs['input_ids'].shape[1]:], skip_special_tokens=False).strip()
+    # Clean up potential <|im_end|> or other special tokens if not fully skipped
+    response_text = response_text.replace("<|im_end|>", "").strip()
+
+    print(f"LLM (few-shot) raw response for {dataset_id}: '{response_text}'")
+    if "Primary" in response_text: # Be a bit flexible with matching
+        return "Primary"
+    elif "Secondary" in response_text:
+        return "Secondary"
+    else:
+        print(f"Warning: LLM (few-shot) response for {dataset_id} not clearly Primary/Secondary: '{response_text}'")
+        return "Uncertain_FS"
+
+except Exception as e:
+    print(f"Error during LLM (few-shot) generation for {dataset_id}: {e}")
+    return "Error: LLM_FS_failed"
+
+# --- Example Usage for Few-Shot (integrate into your main processing loop) ---
+# Assuming `article_text_content` and `current_dataset_id` are available:
+# classification = generate_llm_classification_few_shot(article_text_content, current_dataset_id)
+# print(f"Dataset: {current_dataset_id}, Classification (Few-Shot): {classification}")
+```
+
+Choosing Between Fine-tuning and Few-Shot:
+
+- Few-Shot Prompting:
+  - Pros: Much faster to implement, no training required, uses the base model. Good for quick iteration and testing.
+  - Cons: Performance heavily depends on the quality and relevance of the few-shot examples. May not generalize as well as a fine-tuned model if the task is complex or requires nuanced understanding not easily captured by a few examples. Prompt length increases.
+- Fine-tuning:
+  - Pros: Can lead to better performance and generalization if you have enough high-quality training data. The model learns the specific task and style. Can result in shorter prompts at inference time.
+  - Cons: More complex to set up, requires significant computational resources and time. Risk of overfitting if training data is small or not diverse.
+
+For your Kaggle notebook, I'd recommend starting with few-shot prompting. It's easier to get running offline and will give you a baseline. If the performance is insufficient and you have the resources/time within Kaggle's limits, then explore fine-tuning a smaller Qwen variant. Remember to manage your file paths carefully for the offline environment!
