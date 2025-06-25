@@ -1,0 +1,418 @@
+Okay, Jim, let's break down how you could approach both fine-tuning a Qwen model with your labeled data and how to use that data directly for few-shot prompting.
+
+Important Notes for Offline Kaggle:
+
+- Model Size & Resources: Fine-tuning LLMs, even smaller ones, can be resource-intensive (RAM, GPU VRAM, time). For Kaggle notebooks, you'll likely want to use one of the smaller Qwen variants (e.g., Qwen1.5-0.5B-Chat, Qwen1.5-1.8B-Chat, or Qwen1.5-4B-Chat if resources permit). Full pre-training is out of scope for a notebook.
+- Offline Dependencies:
+  - The Qwen model files (weights, tokenizer, config).
+  - Your training data CSV.
+  - Libraries like 
+
+```
+transformers
+```
+
+, 
+
+```
+torch
+```
+
+, 
+
+```
+datasets
+```
+
+, 
+
+```
+accelerate
+```
+
+, and 
+
+```
+trl
+```
+
+ (for Supervised Fine-Tuning). These need to be available as Kaggle Datasets (e.g., wheel files or pre-installed).
+- Saving Fine-tuned Model: You can save the fine-tuned model to 
+
+```
+/kaggle/working/
+```
+
+. After your session, you can create a new Kaggle Dataset from these output files to use your custom model in other notebooks.
+
+Part 1: Fine-tuning Qwen with Your Labeled Data
+
+This process involves preparing your data, setting up the trainer, running the fine-tuning, and saving the model. We'll use the 
+
+```
+SFTTrainer
+```
+
+ from the 
+
+```
+trl
+```
+
+ library, which is convenient for supervised fine-tuning.
+
+1.A. Data Preparation for Fine-tuning
+
+Your training data (
+
+```
+article_id, dataset_id, label
+```
+
+) needs to be transformed into a format suitable for the 
+
+```
+SFTTrainer
+```
+
+. This usually means creating a text string for each example that includes the instruction, context (article snippet), the specific question about the dataset ID, and the expected answer, formatted in the way the chat model expects (e.g., ChatML for Qwen).
+
+python
+
+FileEditView
+
+Copy
+
+Focus
+
+```
+import pandas as pd
+from datasets import Dataset # Hugging Face datasets library
+
+# --- Configuration (Adjust these paths for Kaggle) ---
+TRAINING_CSV_PATH = "/kaggle/input/your-training-data/training_data.csv" # Your labeled data
+BASE_MODEL_PATH = "/kaggle/input/qwen-base-model/qwen1.5-1.8b-chat" # Path to base Qwen model
+FINE_TUNED_MODEL_OUTPUT_DIR = "/kaggle/working/qwen_finetuned_dataset_classifier"
+
+# --- Dummy function to get article text (replace with your actual logic) ---
+# In a real scenario, you'd fetch this from your PDF/XML parsing pipeline
+# For this example, we'll use a placeholder.
+def get_article_snippet_for_id(article_id, max_length=1000):
+# This is a placeholder. You need to implement this based on how you store/access article texts.
+# It should return a relevant text snippet for the given article_id.
+# Example:
+# if article_id == "article123":
+#    return "This is the text for article123... The authors developed dataset XYZ (10.123/xyz) for this work..."
+# else:
+#    return "Some generic article text snippet mentioning a dataset."
+# For demonstration, let's create some dummy text based on the ID.
+return f"This is a sample text for article {article_id}. It discusses various datasets. We are interested in one specific dataset. The methods section details data collection. This study presents new findings based on data."[:max_length]
+
+def create_finetuning_prompt_chatml(article_snippet, dataset_id, label):
+"""
+Creates a prompt in Qwen's ChatML format for fine-tuning.
+The SFTTrainer will handle masking the prompt part for loss calculation.
+"""
+user_message = f"""
+Article Context (excerpt):
+"{article_snippet}"
+
+Dataset Identifier: "{dataset_id}"
+
+Question: Based on the provided article context, was the dataset (identified as "{dataset_id}"):
+1. Created by the authors primarily for the research described in THIS article? (If so, it's "Primary")
+2. An existing dataset that the authors obtained and used for their research in THIS article? (If so, it's "Secondary")
+
+Please respond with only one word: "Primary" or "Secondary".
+"""
+# ChatML format
+return f"<|im_start|>system\nYou are an expert research assistant.<|im_end|>\n<|im_start|>user\n{user_message.strip()}<|im_end|>\n<|im_start|>assistant\n{label}<|im_end|>"
+
+# Load your training data
+df_train = pd.read_csv(TRAINING_CSV_PATH)
+
+# Prepare data for SFTTrainer
+formatted_texts = []
+for _, row in df_train.iterrows():
+article_id = row['article_id']
+dataset_id = row['dataset_id']
+label = row['label'] # "Primary" or "Secondary"
+
+article_snippet = get_article_snippet_for_id(article_id) # Get relevant text
+
+if not article_snippet: # Skip if no text found for the article
+    print(f"Warning: No article snippet found for {article_id}. Skipping this training example.")
+    continue
+
+formatted_texts.append({"text": create_finetuning_prompt_chatml(article_snippet, dataset_id, label)})
+
+if not formatted_texts:
+raise ValueError("No training data could be formatted. Check `get_article_snippet_for_id` and your CSV.")
+
+# Convert to Hugging Face Dataset
+train_dataset = Dataset.from_list(formatted_texts)
+print(f"Prepared {len(train_dataset)} examples for fine-tuning.")
+print("Example formatted training instance:")
+print(train_dataset[0]['text'])
+```
+
+1.B. Fine-tuning Script
+
+python
+
+FileEditView
+
+Copy
+
+Focus
+
+```
+# Ensure these libraries are available offline in your Kaggle environment
+from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
+from trl import SFTTrainer
+import torch
+
+# --- Fine-tuning ---
+if torch.cuda.is_available():
+device = torch.device("cuda")
+print(f"Using GPU: {torch.cuda.get_device_name(0)}")
+else:
+device = torch.device("cpu")
+print("Using CPU. Fine-tuning will be very slow.")
+
+try:
+# Load tokenizer and model
+print(f"Loading base model and tokenizer from: {BASE_MODEL_PATH}")
+tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_PATH, trust_remote_code=True)
+# Qwen specific: if no pad token, set to eos token
+if tokenizer.pad_token is None:
+    tokenizer.pad_token = tokenizer.eos_token
+    print("Set tokenizer.pad_token to tokenizer.eos_token")
+
+model = AutoModelForCausalLM.from_pretrained(
+    BASE_MODEL_PATH,
+    trust_remote_code=True,
+    torch_dtype=torch.bfloat16 if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else torch.float32, # Use bfloat16 if supported for efficiency
+    device_map="auto" # Automatically use GPU if available
+)
+print(f"Model loaded on device: {model.device}")
+
+# --- Training Arguments ---
+# These are example arguments. Adjust them based on your dataset size, resources, and desired training time.
+# For Kaggle, num_train_epochs might be small (e.g., 1-3).
+# `per_device_train_batch_size` should be small if VRAM is limited (e.g., 1 or 2).
+# `gradient_accumulation_steps` can help simulate a larger batch size.
+training_args = TrainingArguments(
+    output_dir=f"{FINE_TUNED_MODEL_OUTPUT_DIR}/checkpoints",
+    num_train_epochs=1,  # Start with 1 epoch for testing
+    per_device_train_batch_size=1, # Adjust based on VRAM
+    gradient_accumulation_steps=4, # Effective batch size = 1 * 4 = 4
+    learning_rate=2e-5,
+    logging_steps=10,
+    save_steps=50, # Save checkpoints periodically
+    fp16=torch.cuda.is_available() and not torch.cuda.is_bf16_supported(), # Use fp16 if bfloat16 not available but CUDA is
+    bf16=torch.cuda.is_available() and torch.cuda.is_bf16_supported(), # Use bfloat16 if available
+    optim="paged_adamw_8bit", # Or "adamw_torch" if bitsandbytes not available/working
+    # report_to="none", # If you don't want to log to wandb/tensorboard etc.
+    # max_steps=100, # Optionally limit total training steps for a quick test
+)
+
+# --- Initialize SFTTrainer ---
+trainer = SFTTrainer(
+    model=model,
+    tokenizer=tokenizer,
+    train_dataset=train_dataset,
+    dataset_text_field="text",  # The key in your dataset that contains the formatted text
+    args=training_args,
+    max_seq_length=1024,  # Adjust based on your prompt length and model capacity
+    packing=False, # Set to True if your inputs are much shorter than max_seq_length and you want to pack them
+)
+
+print("Starting fine-tuning...")
+trainer.train()
+print("Fine-tuning completed.")
+
+# --- Save the fine-tuned model and tokenizer ---
+print(f"Saving fine-tuned model to: {FINE_TUNED_MODEL_OUTPUT_DIR}")
+trainer.save_model(FINE_TUNED_MODEL_OUTPUT_DIR) # Saves model and tokenizer
+# tokenizer.save_pretrained(FINE_TUNED_MODEL_OUTPUT_DIR) # SFTTrainer should save tokenizer too
+
+print(f"Model and tokenizer saved. You can now create a Kaggle dataset from the contents of '{FINE_TUNED_MODEL_OUTPUT_DIR}'.")
+
+except Exception as e:
+print(f"An error occurred during fine-tuning: {e}")
+import traceback
+traceback.print_exc()
+```
+
+To use the fine-tuned model later: You would point 
+
+```
+BASE_MODEL_PATH
+```
+
+ (or a new variable like 
+
+```
+FINE_TUNED_MODEL_PATH
+```
+
+) to 
+
+```
+/kaggle/input/your-finetuned-qwen-dataset/
+```
+
+ in your inference notebook.
+
+Part 2: Using Training Data Directly in the Prompt (Few-Shot Prompting)
+
+This method doesn't require fine-tuning. You select a few examples from your training data and prepend them to your actual query.
+
+python
+
+FileEditView
+
+Copy
+
+Focus
+
+```
+import random
+
+# --- Configuration (Adjust these paths for Kaggle) ---
+# TRAINING_CSV_PATH = "/kaggle/input/your-training-data/training_data.csv" # Already defined
+# BASE_MODEL_PATH = "/kaggle/input/qwen-base-model/qwen1.5-1.8b-chat" # Path to base Qwen model
+
+# --- Load base LLM (if not already loaded) ---
+# Assume llm_model and llm_tokenizer are loaded as in your previous script's `load_llm()` function.
+# For this example, let's redefine a simplified load function for clarity.
+_llm_model_fs = None
+_llm_tokenizer_fs = None
+_device_fs = "cuda" if torch and torch.cuda.is_available() else "cpu"
+
+def load_llm_for_fewshot(model_path):
+global _llm_model_fs, _llm_tokenizer_fs
+if _llm_model_fs and _llm_tokenizer_fs:
+    return True # Already loaded
+try:
+    print(f"Loading Qwen tokenizer from: {model_path}")
+    _llm_tokenizer_fs = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+    if _llm_tokenizer_fs.pad_token is None:
+         _llm_tokenizer_fs.pad_token = _llm_tokenizer_fs.eos_token
+    print(f"Loading Qwen model from: {model_path}")
+    _llm_model_fs = AutoModelForCausalLM.from_pretrained(
+        model_path, device_map="auto", trust_remote_code=True
+    ).eval()
+    print(f"LLM for few-shot loaded successfully on {_llm_model_fs.device}.")
+    return True
+except Exception as e:
+    print(f"Error loading LLM for few-shot: {e}")
+    return False
+
+# --- Load and Prepare Few-Shot Examples ---
+df_train_fs = pd.read_csv(TRAINING_CSV_PATH)
+few_shot_examples = []
+
+# Select a few diverse examples (e.g., 1 Primary, 1 Secondary)
+# You can make this selection more sophisticated
+primary_examples = df_train_fs[df_train_fs['label'] == 'Primary'].sample(n=min(1, len(df_train_fs[df_train_fs['label'] == 'Primary'])))
+secondary_examples = df_train_fs[df_train_fs['label'] == 'Secondary'].sample(n=min(1, len(df_train_fs[df_train_fs['label'] == 'Secondary'])))
+selected_examples_df = pd.concat([primary_examples, secondary_examples])
+
+for _, row in selected_examples_df.iterrows():
+article_snippet = get_article_snippet_for_id(row['article_id'], max_length=300) # Shorter snippets for examples
+if not article_snippet: continue
+
+# Using the ChatML format for consistency with Qwen
+example_user_message = f"""
+Article Context (excerpt):
+"{article_snippet}"
+Dataset Identifier: "{row['dataset_id']}"
+Question: Based on the provided article context, was the dataset (identified as "{row['dataset_id']}"):
+1. Created by the authors primarily for the research described in THIS article? (If so, it's "Primary")
+2. An existing dataset that the authors obtained and used for their research in THIS article? (If so, it's "Secondary")
+Please respond with only one word: "Primary" or "Secondary".
+"""
+example_chatml = f"<|im_start|>user\n{example_user_message.strip()}<|im_end|>\n<|im_start|>assistant\n{row['label']}<|im_end|>"
+few_shot_examples.append(example_chatml)
+
+print(f"Prepared {len(few_shot_examples)} few-shot examples.")
+
+# --- Modified Classification Function for Few-Shot ---
+def generate_llm_classification_few_shot(article_text_snippet, dataset_id, num_examples_to_use=2):
+if not _llm_model_fs or not _llm_tokenizer_fs:
+    if not load_llm_for_fewshot(BASE_MODEL_PATH): # Use the base model path
+         print("LLM not loaded for few-shot. Cannot classify.")
+         return "Error: LLM not loaded"
+
+# Construct the few-shot part of the prompt
+# Randomly select or take the first N examples
+current_few_shot_prompts = random.sample(few_shot_examples, min(num_examples_to_use, len(few_shot_examples)))
+
+few_shot_prompt_string = "\n".join(current_few_shot_prompts)
+
+# Construct the actual query for the current item
+query_user_message = f"""
+Article Context (excerpt):
+"{article_text_snippet[:3500]}" # Truncate for context window
+Dataset Identifier: "{dataset_id}"
+Question: Based on the provided article context, was the dataset (identified as "{dataset_id}"):
+1. Created by the authors primarily for the research described in THIS article? (If so, it's "Primary")
+2. An existing dataset that the authors obtained and used for their research in THIS article? (If so, it's "Secondary")
+Please respond with only one word: "Primary" or "Secondary".
+"""
+query_chatml_user_part = f"<|im_start|>user\n{query_user_message.strip()}<|im_end|>"
+
+# Combine into the full prompt using ChatML structure
+full_prompt_chatml = f"<|im_start|>system\nYou are an expert research assistant.<|im_end|>\n{few_shot_prompt_string}\n{query_chatml_user_part}\n<|im_start|>assistant\n"
+# The final <|im_start|>assistant\n signals the model to start its completion.
+
+# Tokenize and generate
+# Note: Qwen's `apply_chat_template` might be more robust if available and correctly configured for your version.
+# For direct string construction like above, ensure it matches the model's expected format.
+inputs = _llm_tokenizer_fs(full_prompt_chatml, return_tensors="pt", truncation=True, max_length=_llm_tokenizer_fs.model_max_length - 20).to(_llm_model_fs.device)
+
+try:
+    with torch.no_grad():
+        outputs = _llm_model_fs.generate(
+            **inputs,
+            max_new_tokens=10, # Expect "Primary" or "Secondary"
+            pad_token_id=_llm_tokenizer_fs.eos_token_id,
+            eos_token_id=_llm_tokenizer_fs.convert_tokens_to_ids("<|im_end|>") # Stop generation at <|im_end|>
+        )
+
+    # Decode only the generated part
+    response_text = _llm_tokenizer_fs.decode(outputs[0][inputs['input_ids'].shape[1]:], skip_special_tokens=False).strip()
+    # Clean up potential <|im_end|> or other special tokens if not fully skipped
+    response_text = response_text.replace("<|im_end|>", "").strip()
+
+    print(f"LLM (few-shot) raw response for {dataset_id}: '{response_text}'")
+    if "Primary" in response_text: # Be a bit flexible with matching
+        return "Primary"
+    elif "Secondary" in response_text:
+        return "Secondary"
+    else:
+        print(f"Warning: LLM (few-shot) response for {dataset_id} not clearly Primary/Secondary: '{response_text}'")
+        return "Uncertain_FS"
+
+except Exception as e:
+    print(f"Error during LLM (few-shot) generation for {dataset_id}: {e}")
+    return "Error: LLM_FS_failed"
+
+# --- Example Usage for Few-Shot (integrate into your main processing loop) ---
+# Assuming `article_text_content` and `current_dataset_id` are available:
+# classification = generate_llm_classification_few_shot(article_text_content, current_dataset_id)
+# print(f"Dataset: {current_dataset_id}, Classification (Few-Shot): {classification}")
+```
+
+Choosing Between Fine-tuning and Few-Shot:
+
+- Few-Shot Prompting:
+  - Pros: Much faster to implement, no training required, uses the base model. Good for quick iteration and testing.
+  - Cons: Performance heavily depends on the quality and relevance of the few-shot examples. May not generalize as well as a fine-tuned model if the task is complex or requires nuanced understanding not easily captured by a few examples. Prompt length increases.
+- Fine-tuning:
+  - Pros: Can lead to better performance and generalization if you have enough high-quality training data. The model learns the specific task and style. Can result in shorter prompts at inference time.
+  - Cons: More complex to set up, requires significant computational resources and time. Risk of overfitting if training data is small or not diverse.
+
+For your Kaggle notebook, I'd recommend starting with few-shot prompting. It's easier to get running offline and will give you a baseline. If the performance is insufficient and you have the resources/time within Kaggle's limits, then explore fine-tuning a smaller Qwen variant. Remember to manage your file paths carefully for the offline environment!
