@@ -181,6 +181,11 @@ processing pipelines [Dataset]. In: The Cancer Imaging Archive;
 
 ['10.15468/dl.p4r693', '10.1139/cjb-79-9-1039', '10.1186/1756-3305-5-8', '10.7717/peerj.12422', '10.4269/ajtmh.13-0180', '10.1645/GE-2146.1', '10.15468/dl.wgtneb', '10.3109/00365548.2014.975743', '10.7717/peerj.12422/fig-6', '10.1016/S0264-410X(02)00812-5', '10.1155/2009/593232', '10.1586/eri.09.118', '10.15468/dl.wp98ts', '10.1111/j.1469-0691.2009.02848.x', '10.7717/peerj.12422/fig-3', '10.7717/peerj.12422/fig-5', '10.15468/dl.t3h8b4', '10.2807/ese.15.27.19606-en', '10.3389/fcimb.2013.00048', '10.1016/j.cois.2016.06.005', '10.1016/j.ijpara.2013.06.009', '10.2147/IMCRJ.S51240', '10.15468/dl.yak5vd', '10.1016/S0140-6736(11)60103-7', '10.1007/s00436-016-5022-5', '10.7717/peerj.12422/fig-4', '10.15468/dl.k6jv69', '10.15468/dl.82wsgb', '10.3389/fvets.2020.519059', '10.3390/pathogens8020042', '10.1016/j.ijmm.2008.01.010', '10.7717/peerj.12422/fig-2', '10.1016/S1286-4579(00)00393-2', '10.1186/1756-3305-6-1', '10.1016/j.pt.2020.04.011', '10.15468/dl.72ddmz', '10.7717/peerj.12422/fig-7', '10.1371/journal.pone.0134124', '10.15468/dl.czyyq2', '10.1371/journal.pone.0181807', '10.1016/j.ttbdis.2010.10.007', '10.7717/peerj.4255', '10.1016/S0934-8840(98)80123-0', '10.1007/s10096-006-0167-2', '10.3390/vetsci5020060', '10.1016/S0140-6736(08)60800-4', '10.15468/dl.j4fe7k', '10.1007/s00442-009-1430-x', '10.1093/femsle/fnx244', '10.1186/s13071-020-04493-5', '10.1016/j.ttbdis.2017.04.009', '10.1089/vbz.2011.0905', '10.1016/j.ijmm.2008.02.006', '10.1023/A:1006070416135', '10.1093/forestry/cpm020', '10.1016/j.ttbdis.2010.10.006', '10.2307/1312946', '10.1016/j.micinf.2007.12.005', '10.7717/peerj.12422/fig-1']
 
+
+"GSE12345" (Gene Expression Omnibus dataset)
+“PDB 1Y2T” (Protein Data Bank dataset)
+"E-MEXP-568" (ArrayExpress dataset)
+
 ---------------------------------------
 Other non-doi dataset ID's:
 ---------------------------------------
@@ -189,19 +194,20 @@ BX119912
 CAB004592
 CP130886
 CVCL_0213 or CVCL_KS61
-E-GEOD-19722
-E-PROT-100 or E-PROT-23
+E-GEOD-19722 or E-PROT-100 or E-PROT-23 : E-a{4}-d{1,8}
 EMPIAR-10005
 ENSBTAG00000011038
 ENSMMUT00000003274
 EPI1018205 or EPI954552
 EPI_ISL_10271777
 ERR2135448 only 1
-GSE130386 or GSE67047
+GSE130386 or GSE67047 : "accession numbers GSE37569, GSE45042 , GSE28166"
 HPA001426
 IPR000264
 K02388
+PDB 1Y2T
 PF00078
+PRJE43395
 PRJNA293 or PRJNA287300
 PXD001676
 SAMN07159041
@@ -209,6 +215,64 @@ SRP184152
 SRR2429147
 SRX1830060
 STH00996
+
+
+Grouped dataset ID counts:
+   dataset_id_trim  article_id
+52             htt         325 - r'10\.\d{4,5}/[-._;()/:A-Za-z0-9\u002D\u2010\u2011\u2012\u2013\u2014\u2015]+'	DOI_PATTERN
+doi_pattern = 			 r'10\.\s?\d{4,5}\/[-._()<>;\/:A-Za-z0-9]+\s?(?:(?![A-Z]+)(?!\d{1,3}\.))+[-._()<>;\/:A-Za-z0-9]+'
+20             EPI          64 - r'\bEPI[-_A-Z0-9]+'
+47             SAM          41 - r'\bSAMN[0-9]+' SAMN07159041
+25             IPR          33 - r'\bIPR[0-9]+'
+11             CHE          29 - r'\bCHEMBL[0-9]+'
+41             PRJ          26 - r'\bPRJ[A-Z0-9]+'
+16             E-G          25 - r'\bE-[A-Z]{4}-[0-9]+'	E-G and E-P
+19             ENS          21 - r'\bENS[A-Z]{4}[0-9]+'
+14             CVC          16 - r'\bCVCL_[A-Z0-9]+'
+18             EMP          12 - r'\bEMPIAR-[0-9]+'
+42             PXD          10 - r'\bPXD[0-9]+'
+24             HPA           9 - r'\bHPA[0-9]+'
+49             SRR           4 - r'\bSRR[0-9]+'
+23             GSE           3 - r'\b(GSE|GSM|GDS|GPL)\d{4,6}\b'
+12             CP0           2 - r'\b[A-Z]{1,2}\d{5,6}\b' GENBANK_PATTERN
+10             CAB           2 - r'\bCAB[0-9]+'
+
+
+# Example for GenBank accession numbers (e.g., AB123456, AF000001)
+GENBANK_PATTERN = r'\b[A-Z]{1,2}\d{5,6}\b'
+# Example for GEO accession numbers (e.g., GSE12345, GSM12345)
+GEO_PATTERN = r'\b(GSE|GSM|GDS|GPL)\d{4,6}\b'
+
+
+Grouped dataset ID counts:
+   dataset_id_trim  article_id
+52             htt         325
+29             Mis         309
+20             EPI          64
+47             SAM          41
+25             IPR          33
+11             CHE          29
+41             PRJ          26
+16             E-G          25
+19             ENS          21
+26             K02          20
+39             PF0          19
+14             CVC          16
+17             E-P          12
+18             EMP          12
+42             PXD          10
+24             HPA           9
+4              3.4           5
+49             SRR           4
+3              3.3           3
+23             GSE           3
+5              3.9           3
+12             CP0           2
+36             P24           2
+2              3.2           2
+10             CAB           2
+40             PF1           2
+27             KX0           2
 
 
 ENSMMUT:
