@@ -1,0 +1,97 @@
+Journal Archiving and Interchange DTD
+
+--------------------------------------
+49 Total
+xmlns="http://www.tei-c.org/ns/1.0"	10.1007_s00382-022-06361-7.xml {'https://doi.org/10.6075/j0154fjj', 'https://doi.org/10.6075/j089161b'}
+--------------------------------------
+<title level="a" type="main">Winter wet-dry weather patterns driving atmospheric rivers and Santa Ana winds provide evidence for increasing wildfire hazard in California</title>
+
+<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p><s>Floods caused by atmospheric rivers and wildfires fanned by Santa Ana winds are common occurrences in California with devastating societal impacts.</s><s>In this work, we show that winter weather variability in California, including the occurrence of extreme and impactful events, is linked to four atmospheric circulation regimes over the North Pacific Ocean previously named and identified as the "NP4 modes".</s><s>These modes come in and out of phase with each other during the season, resulting in distinct weather patterns that recur throughout the historical record.</s><s>Some phase combinations favor atmospheric river landfalls and extreme daily or multi-day precipitation, while other phase combinations favor anomalously hot weather and drying Santa Ana wind conditions over Southern California.</s><s>This historical perspective of atmospheric circulation and impacts over 70 years reveals that weather patterns are changing in a way that enhances wildfire hazard in California, while the frequency of weather patterns linked to historical floods is not diminishing.</s><s>These changes highlight the rising hazards of cascading weather extremes in California's present and future.</s></p></div>
+</abstract>
+
+<biblstruct xml:id="b29">
+<analytic>
+<title level="a" type="main">Data from: Four atmospheric circulation regimes over the North Pacific and their relationship to California precipitation on daily to seasonal timescales</title>
+<author>
+<persname><forename type="first">K</forename><surname>Guirguis</surname></persname>
+</author>
+<author>
+<persname><forename type="first">A</forename><surname>Gershunov</surname></persname>
+</author>
+<idno type="DOI">10.6075/J0154FJJ</idno>
+<ptr target="https://doi.org/10.6075/J0154FJJ"></ptr>
+</analytic>
+<monogr>
+<title level="j">UC San Diego Library Digital Collections</title>
+<imprint>
+<date type="published" when="2020">2020b</date>
+</imprint>
+</monogr>
+<note type="raw_reference">Guirguis K, Gershunov A, DeFlorio MJ, Shulgina T, Delle Monache L, Subramanian AC et al (2020b) Data from: Four atmospheric circulation regimes over the North Pacific and their relationship to California precipitation on daily to seasonal timescales. UC San Diego Library Digital Collections. https:// doi. org/ 10. 6075/ J0154 FJJ</note>
+</biblstruct>
+
+<idno type="DOI">10.6075/J089161B</idno>
+<ptr target="https://doi.org/10.6075/J089161B"></ptr>
+</analytic>
+<monogr>
+<title level="s">UC San Diego Library Digital Collections</title>
+<imprint>
+<date type="published" when="2022">2022</date>
+</imprint>
+</monogr>
+<note type="raw_reference">Guirguis K, Gershunov A, Hatchett B, Shulgina T, DeFlorio MJ, Sub- ramanian AC, Guzman-Morales J, Aguilera R, Clemesha R, Cor- ringham TW, Delle Monache L, Reynolds D, Tardy A, Small I, Ralph FM (2022) Historical catalog of winter weather regimes impacting California, 1949-2017. UC San Diego Library Digital Collections. https:// doi. org/ 10. 6075/ J0891 61B</note>
+</biblstruct>
+
+
+
+--------------------------------------
+13 Total
+xmlns="http://www.wiley.com/namespaces/wiley"	[{'dataset_id': 'https://doi.org/10.5061/dryad.d84hg87', 'type': 'Primary'}]
+--------------------------------------
+
+<titleGroup><title sort="FUNCTIONAL ECOLOGY" type="main">Functional Ecology</title><title type="short">Funct Ecol</title></titleGroup></publicationMeta><publicationMeta level="part" position="10"><doi origin="wiley">10.1111/fec.v34.1</doi><titleGroup><title type="main">Special Feature: An Integrative View of Senescence in Nature</title></titleGroup>
+
+<abstractGroup><abstract type="main" xml:id="fec13431-abs-0001" xml:lang="en"><title type="main">Abstract</title><p><list formatted="paragraph" style="1" xml:id="fec13431-list-0001"><listItem>Temporal fluctuations in growth rates can arise from both variation in age‐specific vital rates and temporal fluctuations in age structure (i.e. the relative abundance of individuals in each age‐class). However, empirical assessments of temporal fluctuations in age structure and their effects on population growth rate are relatively rare. Most research has focused on understanding the contribution of changing vital rates to population growth rates and these analyses routinely assume that: (a) populations have stable age distributions, (b) environmental influences on vital rates and age structure are stationary (i.e. the mean and/or variance of these processes does not change over time), and (c) dynamics are independent of density.</listItem><listItem>Here we quantified fluctuations in age structure and assessed whether they were stationary for four populations of free‐ranging vertebrates: moose (observed for 48 years), elk (15 years), tawny owls (15 years) and grey wolves (17 years). We also assessed the extent that fluctuations in age structure were useful for predicting annual population growth rates using models which account for density dependence.</listItem><listItem>Fluctuations in age structure were of a similar magnitude to fluctuations in abundance. For three populations (moose, elk, owls), the mean and the skew of the age distribution fluctuated without stabilizing over the observed time periods. More precisely, the sample variance (interannual variance) of age structure indices increased with the length of the study period, which suggests that fluctuations in age structure were non‐stationary for these populations – at least over the 15‐ to 48‐year periods analysed.</listItem><listItem>Fluctuations in age structure were associated with population growth rate for two populations. In particular, population growth varied from positive to negative for moose and from near zero to negative for elk as the average age of adults increased over its observed range<i>.</i></listItem><listItem>Non‐stationarity in age structure may represent an important mechanism by which abundance becomes non‐stationary – and therefore difficult to forecast – over time‐scales of concern to wildlife managers. Overall, our results emphasize the need for vertebrate populations to be modelled using approaches that consider transient dynamics and density dependence and that do not rely on the assumption that environmental processes are stationary.</listItem></list></p><p>A free <link href="http://onlinelibrary.wiley.com/doi/10.1111/1365-2435.13431/suppinfo">Plain Language Summary</link> can be found within the Supporting Information of this article.</p></abstract><abstract type="graphical" xml:id="fec13431-abs-1002" xml:lang="en"><p>A free <link href="http://onlinelibrary.wiley.com/doi/10.1111/1365-2435.13431/suppinfo">Plain Language Summary</link> can be found within the Supporting Information of this article.<blockFixed type="graphic" xml:id="fec13431-blkfxd-0001"><mediaResourceGroup><mediaResource alt="image" href="urn:x-wiley:fec13431:fec13431:fec13431-toc-0001"/><mediaResource alt="image" href="graphic/fec13431-toc-0001-m.png" mimeType="image/png" rendition="webHiRes"/></mediaResourceGroup></blockFixed></p></abstract></abstractGroup>
+
+<section numbered="no" type="dataAvailability" xml:id="fec13431-sec-0019"><title type="main">DATA AVAILABILITY STATEMENT</title><p>Data used in the above analyses are available from the Dryad Digital Repository <url href="https://doi.org/10.5061/dryad.d84hg87">https://doi.org/10.5061/dryad.d84hg87</url> (Hoy et al., <link href="#fec13431-bib-0039"/>).</p></section></section>
+
+
+--------------------------------------
+2 Total - 10.1111_cas.12935.xml and 10.1111_mec.16977 [{'dataset_id': 'https://doi.org/10.5061/dryad.4mw6m90cz', 'type': 'Primary'}]
+<!DOCTYPE collection SYSTEM "BioC.dtd"	10.1111_cas.12935.xml 
+[{'dataset_id': 'CAB004592', 'type': 'Secondary'}, {'dataset_id': 'CAB010055', 'type': 'Secondary'}, {'dataset_id': 'HPA001426', 'type': 'Secondary'}, {'dataset_id': 'HPA001522', 'type': 'Secondary'}, {'dataset_id': 'HPA001612', 'type': 'Secondary'}, {'dataset_id': 'HPA003156', 'type': 'Secondary'}, {'dataset_id': 'HPA003927', 'type': 'Secondary'}, {'dataset_id': 'HPA007450', 'type': 'Secondary'}, {'dataset_id': 'HPA008063', 'type': 'Secondary'}, {'dataset_id': 'HPA030827', 'type': 'Secondary'}, {'dataset_id': 'HPA042865', 'type': 'Secondary'}, {'dataset_id': 'O75787', 'type': 'Secondary'}, {'dataset_id': 'P17900', 'type': 'Secondary'}, {'dataset_id': 'P21741', 'type': 'Secondary'}, {'dataset_id': 'P23142', 'type': 'Secondary'}, {'dataset_id': 'P24593', 'type': 'Secondary'}, {'dataset_id': 'P24821', 'type': 'Secondary'}, {'dataset_id': 'P51884', 'type': 'Secondary'}, {'dataset_id': 'P53004', 'type': 'Secondary'}, {'dataset_id': 'Q08629', 'type': 'Secondary'}, {'dataset_id': 'Q12907', 'type': 'Secondary'}, {'dataset_id': 'Q96AG4', 'type': 'Secondary'}, {'dataset_id': 'Q99538', 'type': 'Secondary'}]
+--------------------------------------
+<infon key="section_type">TITLE</infon><infon key="source">Cancer Sci</infon><infon key="type">front</infon><infon key="volume">107</infon><infon key="year">2016</infon><offset>0</offset><text>Identification of ganglioside GM2 activator playing a role in cancer cell migration through proteomic analysis of breast cancer secretomes</text></passage>
+
+<passage><infon key="section_type">TITLE</infon><text>Identification of ganglioside GM2 activator playing a role in cancer cell migration through proteomic analysis of breast cancer secretomes</text></passage>
+
+<passage><infon key="section_type">ABSTRACT</infon><text>Cancer cell secretomes are considered a potential source for the discovery of cancer markers. In this study, the secretomes of four breast cancer (BC) cell lines (Hs578T, MCFâ7, MDAâMBâ231, and SKâBRâ3) were profiled with liquid chromatographyâtandem mass spectrometry analysis. A total of 1410 proteins were identified with less than 1% false discovery rate, of which approximately 55% (796 proteins) were predicted to be secreted from cells. To find BCâspecific proteins among the secreted proteins, data of immunohistochemical staining compiled in the Human Protein Atlas were investigated by comparing the data of BC tissues with those of normal tissues. By applying various criteria, including higher expression level in BC tissues, higher predicted potential of secretion, and sufficient number of tandem mass spectra, 12 biomarker candidate proteins including ganglioside GM2 activator (GM2A) were selected for confirmation. Western blot analysis and ELISA for plasma samples of healthy controls and BC patients revealed elevation of GM2A in BC patients, especially those who were estrogen receptorânegative. Additionally, siRNAâmediated knockdown of GM2A in BC cells decreased migration in vitro, whereas the overexpression of GM2A led to an increase in cell migration. Although GM2A as a diagnostic and prognostic marker in BC should be carefully verified further, this study has established the potential role of GM2A in BC progression.</text></passage>
+
+<passage><infon key="section_type">SUPPL</infon><infon key="type">title_1</infon><offset>43120</offset><text>Supplementary Material</text></passage><passage><infon key="section_type">SUPPL</infon><infon key="type">title_1</infon><offset>43143</offset><text>DATA ACCESSIBILITY:</text></passage><passage><infon key="section_type">SUPPL</infon><infon key="type">paragraph</infon><offset>43163</offset><text>Raw sequence data are available at https://www.ncbi.nlm.nih.gov/bioproject/PRJNA955776. Additional data are available at Dryad https://doi.org/10.5061/dryad.4mw6m90cz. Dryad files include phenotypic measures, TPS files for geometric morphometric analysis, and genotypes used for quantitative trait loci mapping.</text></passage>
+
+<passage><infon key="section_type">TABLE</infon><text>Accession no.	Protein name	Gene name	MS/MS spectral count	HPA database	 	MCFâ7	MDAâMBâ231	SKâBRâ3	Hs578T	HPA Aba	Average IHC score	Percent of location	 	Normal	Breast cancer	n/c/m	c/m	n	 	Q99538	Legumain	LGMN	7	24	13	1	HPA001426	1	2	0	100	0	 	O75787	Renin receptor	ATP6AP2	0	7	3	0	HPA003156	1	1.77	0	100	0	 	P24593	Insulinâlike growth factorâbinding protein 5	IBP5	0	14	0	5	CAB009216	1	1.58	0	100	0	 	P17900	Ganglioside GM2 activator	GM2A	1	4	5	2	HPA008063	0	2.5	0	100	0	 	P21741	Midkine	MK	0	11	19	0	CAB010055	0	1.8	9	82	0	 	P51884	Lumican	LUM	31	0	0	0	HPA001522	0	1.32	17	50	0	 	P53004	Biliverdin reductase A	BLVRA	0	5	0	5	HPA042865	0	1.08	18	73	0	 	Q08629	Testicanâ1 (protein SPOCK)	SPOCK1	112	0	0	0	HPA007450	0	1.58	0	100	0	 	Q12907	Lectin mannoseâbinding 2	LMAN2	2	9	2	0	HPA003927	0	1.64	0	82	0	 	Q96AG4	Leucineârich repeatâcontaining protein 59	LRRC59	1	4	0	0	HPA030827	0	1.77	0	100	0	 	P24821	Tenascin	TENA	0	0	22	0	CAB004592	0	1.59	0	100	0	 	P23142	Fibulinâ1	FBLN1	6	0	0	13	HPA001612	0	1.75	0	100	0	 	</text></passage>
+
+
+--------------------------------------
+309Total
+<!DOCTYPE Journal Archiving and Interchange DTD - 10.1007_s00442-022-05201-z.xml
+--------------------------------------
+<article-title>PleThora: Pleural effusion and thoracic cavity segmentations in diseased lungs for benchmarking chest CT processing pipelines</article-title>
+
+<abstract id="mp14424-abs-0001"><p>This manuscript describes a dataset of thoracic cavity segmentations and discrete pleural effusion segmentations we have annotated on 402 computed tomography (CT) scans acquired from patients with non&#x02010;small cell lung cancer. The segmentation of these anatomic regions precedes fundamental tasks in image analysis pipelines such as lung structure segmentation, lesion detection, and radiomics feature extraction. Bilateral thoracic cavity volumes and pleural effusion volumes were manually segmented on CT scans acquired from The Cancer Imaging Archive &#x0201c;NSCLC Radiomics&#x0201d; data collection. Four hundred and two thoracic segmentations were first generated automatically by a U&#x02010;Net based algorithm trained on chest CTs without cancer, manually corrected by a medical student to include the complete thoracic cavity (normal, pathologic, and atelectatic lung parenchyma, lung hilum, pleural effusion, fibrosis, nodules, tumor, and other anatomic anomalies), and revised by a radiation oncologist or a radiologist. Seventy&#x02010;eight pleural effusions were manually segmented by a medical student and revised by a radiologist or radiation oncologist. Interobserver agreement between the radiation oncologist and radiologist corrections was acceptable. All expert&#x02010;vetted segmentations are publicly available in NIfTI format through The Cancer Imaging Archive at <ext-link ext-link-type="uri" xlink:href="https://doi.org/10.7937/tcia.2020.6c7y-gq39">https://doi.org/10.7937/tcia.2020.6c7y&#x02010;gq39</ext-link>. Tabular data detailing clinical and technical metadata linked to segmentation cases are also available. Thoracic cavity segmentations will be valuable for developing image analysis pipelines on pathologic lungs &#x02014; where current automated algorithms struggle most. In conjunction with gross tumor volume segmentations already available from &#x0201c;NSCLC Radiomics,&#x0201d; pleural effusion segmentations may be valuable for investigating radiomics profile differences between effusion and primary tumor or training algorithms to discriminate between them.</p></abstract>
+
+[{'dataset_id': 'https://doi.org/10.5061/dryad.wpzgmsbps', 'type': 'Primary'}]
+<notes notes-type="data-availability"><title>Data availability</title><p>All data are available at <ext-link ext-link-type="uri" xlink:href="https://doi.org/10.5061/dryad.wpzgmsbps">https://doi.org/10.5061/dryad.wpzgmsbps</ext-link>.</p></notes><notes notes-type="data-availability"><title>Code availability</title><p>Code is available at <ext-link ext-link-type="uri" xlink:href="https://doi.org/10.5061/dryad.wpzgmsbps">https://doi.org/10.5061/dryad.wpzgmsbps</ext-link>.</p></notes>
+
+
+<ref id="mp14424-bib-0051"><label>51</label>
+<mixed-citation publication-type="miscellaneous" id="mp14424-cit-0051">
+<string-name>
+<surname>Kiser</surname>
+<given-names>KJ</given-names>
+</string-name>, <string-name>
+<article-title>Data from the thoracic volume and pleural effusion segmentations in diseased lungs for benchmarking chest CT processing pipelines [Dataset]</article-title>. In: <italic>The Cancer Imaging Archive</italic>; <year>2020</year>
+<pub-id pub-id-type="doi">10.7937/tcia.2020.6c7y-gq39</pub-id>
+</mixed-citation>
+</ref>
