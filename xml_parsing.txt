@@ -70,6 +70,7 @@ xmlns="http://www.wiley.com/namespaces/wiley" 10.1111_1365-2435.13431.xml	[{'dat
 
 
 --------------------------------------
+Done!
 2 Total BioC - 10.1111_cas.12935.xml and 10.1111_mec.16977 
 --------------------------------------
 [{'dataset_id': 'https://doi.org/10.5061/dryad.4mw6m90cz', 'type': 'Primary'}]
@@ -127,3 +128,32 @@ tree.find()
 "data_availability": "Data availability Data are available from The Cancer Imaging Archive (TCIA) from refereces of [ 20 ,  39 \\u2013 47 ].", "other_data_citations": ["{\\"dataset_ids\\": [\'10.1007/s10278-013-9622-7\'], context: \\"Clark K Vendt B Smith K Freymann J Kirby J Koppel P The Cancer Imaging Archive (TCIA): maintaining and operating a public information repository J Digit Imaging 2013 26 1045 1057 10.1007/s10278-013-9622-7 23884657\\"}", "{\\"dataset_ids\\": [\'10.7937/K9/TCIA.2017.7hs46erv\'], context: \\"Bakr S Gevaert O Echegaray S Ayers K Zhou M Shafiq M Data for NSCLC radiogenomics collection The Cancer Imaging Archive 2017 10.7937/K9/TCIA.2017.7hs46erv\\"}", "{\\"dataset_ids\\": [\'10.1038/sdata.2018.202\'], context: \\"Bakr S Gevaert O Echegaray S Ayers K Zhou M Shafiq M A radiogenomic dataset of non-small cell lung cancer Sci Data 2018 5 180202 10.1038/sdata.2018.202 30325352\\"}", "{\\"dataset_ids\\": [\'10.1038/sdata.2018.173\'], context: \\"Grossberg AJ Mohamed ASR Elhalawani H Bennett WC Smith KE Nolan TS Imaging and clinical data archive for head and neck squamous cell carcinoma patients treated with radiotherapy Sci Data 2018 5 180173 10.1038/sdata.2018.173 30179230\\"}", "{\\"dataset_ids\\": [\'10.7937/tcia.2019.30ilqfcl\'], context: \\"Kinahan P, Muzi M, Bialecki B, Herman B, Coombs L. Data from the ACRIN 6668 Trial NSCLC-FDG-PET. Cancer Imaging Arch. 2019;10. 10.7937/tcia.2019.30ilqfcl\\"}"]}'
 
 "data_availability": "Data availability Data are available from The Cancer Imaging Archive (TCIA) from refereces of [ 20 ,  39 \\u2013 47 ].", "other_data_citations": ["{\\"dataset_ids\\": [\'10.1007/s10278-013-9622-7\'], context: \\"The Cancer Imaging Archive (TCIA): maintaining and operating a public information repository|J Digit Imaging|10.1007/s10278-013-9622-7|23884657\\"}", "{\\"dataset_ids\\": [\'10.7937/K9/TCIA.2017.7hs46erv\'], context: \\"Data for NSCLC radiogenomics collection|The Cancer Imaging Archive|10.7937/K9/TCIA.2017.7hs46erv\\"}", "{\\"dataset_ids\\": [\'10.1038/sdata.2018.202\'], context: \\"A radiogenomic dataset of non-small cell lung cancer|Sci Data|10.1038/sdata.2018.202|30325352\\"}", "{\\"dataset_ids\\": [\'10.1038/sdata.2018.173\'], context: \\"Imaging and clinical data archive for head and neck squamous cell carcinoma patients treated with radiotherapy|Sci Data|10.1038/sdata.2018.173|30179230\\"}", "{\\"dataset_ids\\": [\'10.7937/tcia.2019.30ilqfcl\'], context: \\"Kinahan P, Muzi M, Bialecki B, Herman B, Coombs L. Data from the ACRIN 6668 Trial NSCLC-FDG-PET. Cancer Imaging Arch. 2019;10. 10.7937/tcia.2019.30ilqfcl\\"}"]}'
+
+
+------------------------------------------------
+<!DOCTYPE article PUBLIC "-//TaxonX//DTD Taxonomic Treatment Publishing DTD v0 20100105//E'
+------------------------------------------------
+
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tp="http://www.plazi.org/taxpub" article-type="research-article" dtd-version="3.0" xml:lang="en">
+  <front>
+    <article-meta>
+      <title-group>
+        <article-title>Is the spider a good biological control agent for <italic><tp:taxon-name><tp:taxon-name-part taxon-name-part-type="genus" reg="Plutella">Plutella</tp:taxon-name-part> <tp:taxon-name-part taxon-name-part-type="species" reg="xylostella">xylostella</tp:taxon-name-part></tp:taxon-name></italic> (<tp:taxon-name><tp:taxon-name-part taxon-name-part-type="order">Lepidoptera</tp:taxon-name-part></tp:taxon-name>: <tp:taxon-name><tp:taxon-name-part taxon-name-part-type="family">Plutellidae</tp:taxon-name-part></tp:taxon-name>)?</article-title>
+      </title-group>
+
+      <abstract>
+        <label>Abstract</label>
+        <p>Spiders, as predators of insects and other invertebrates, are an important part of the natural enemies, and they are recognized as an important biological ... the spider increased.</p>
+      </abstract>
+
+  <back>
+    <ack>
+      <title>Acknowledgements</title>
+      <p>This study was supported by the National Natural Science Fund of China (process 31672317), National Key Research and Development Program of China (process 2016YFD0200900), and the International Cooperation Projects of Hubei Province Science and Technology Agency (process 2016AHB003).</p>
+    </ack>
+    <ref-list>
+      <title>Literature cited</title>
+      <ref id="B1">
+        <mixed-citation xlink:type="simple"><person-group><name name-style="western"><surname>Cui</surname><given-names>QM</given-names></name><name name-style="western"><surname>Zheng</surname><given-names>Q</given-names></name><name name-style="western"><surname>Hou</surname><given-names>WH</given-names></name><name name-style="western"><surname>Li</surname><given-names>WD</given-names></name><name name-style="western"><surname>Dai</surname><given-names>JH</given-names></name><name name-style="western"><surname>Yuan</surname><given-names>CX</given-names></name></person-group> (<year>2012</year>) <article-title>Survey on spider species in tea garden in Enshi.</article-title><source>Hubei Agricultural Sciences</source><volume>51</volume>(<issue>13</issue>): <fpage>2735</fpage>–<lpage>2737</lpage>.</mixed-citation>
+      </ref>
+
