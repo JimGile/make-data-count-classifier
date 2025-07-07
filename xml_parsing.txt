@@ -1,3 +1,8 @@
+Need to convert these characters
+\u2010, \u2014
+\u201c, \u201d
+
+
 Journal Archiving and Interchange DTD
 
 --------------------------------------
@@ -12,26 +17,10 @@ xmlns="http://www.tei-c.org/ns/1.0"	10.1007_s00382-022-06361-7.xml {'https://doi
 
 <div xmlns="http://www.tei-c.org/ns/1.0">Availability of data and material<p><s>The winter weather regimes catalog developed for this study is available from the UC San Diego Library Digital Collections at https:// doi.</s><s>org/ 10. 6075/ J0891 61B <ref target="#b30" type="bibr">(Guirguis et al. 2022)</ref>.</s><s>The NP4 dataset is available at https:// doi.</s><s>org/ 10. 6075/ J0154 FJJ <ref target="#b29" type="bibr">(Guirguis et al. 2020b</ref>).</s><s>The Santa Ana winds regional index and the SIO-R1 AR catalog are available at https:// wecli ma.</s><s>ucsd.</s><s>edu/ data-produ cts/.</s><s>The Livneh temperature and precipitation data are available at https:// clima tedat aguide.</s><s>ucar.</s><s>edu/ clima te-data.</s><s>Wildfire information is from the California Fire Protection's Fire and Resource Assessment Program (FRAP) fire perimeters database available at https:// frap.</s><s>fire.</s><s>ca.</s><s>gov/ frap-proje cts/ fire-perim eters/.</s><s>Snow water equivalent for the Sierra Nevada are from the Natural Resources Conservation Service available at https:// wcc.</s><s>sc.</s><s>egov.</s><s>usda.</s><s>gov/ nwcc/ rgrpt?</s><s>report= snowc ourse &amp; state= CA.Code availability Code developed for this study will be made available upon request.</s></p></div>
 
-<biblstruct xml:id="b29">
+<biblstruct>
 <analytic>
-<title level="a" type="main">Data from: Four atmospheric circulation regimes over the North Pacific and their relationship to California precipitation on daily to seasonal timescales</title>
-<author>
-<persname><forename type="first">K</forename><surname>Guirguis</surname></persname>
-</author>
-<author>
-<persname><forename type="first">A</forename><surname>Gershunov</surname></persname>
-</author>
-<idno type="DOI">10.6075/J0154FJJ</idno>
-<ptr target="https://doi.org/10.6075/J0154FJJ"></ptr>
-</analytic>
-<monogr>
-<title level="j">UC San Diego Library Digital Collections</title>
-<imprint>
-<date type="published" when="2020">2020b</date>
-</imprint>
-</monogr>
-<note type="raw_reference">Guirguis K, Gershunov A, DeFlorio MJ, Shulgina T, Delle Monache L, Subramanian AC et al (2020b) Data from: Four atmospheric circulation regimes over the North Pacific and their relationship to California precipitation on daily to seasonal timescales. UC San Diego Library Digital Collections. https:// doi. org/ 10. 6075/ J0154 FJJ</note>
-</biblstruct>
+<author role="corresp">
+<persname><forename type="first">Sarah</forename><forename type="middle">S</forename><surname>Sutton</surname></persname>
 
 <idno type="DOI">10.6075/J089161B</idno>
 <ptr target="https://doi.org/10.6075/J089161B"></ptr>
@@ -55,6 +44,10 @@ xmlns="http://www.wiley.com/namespaces/wiley" 10.1111_1365-2435.13431.xml	[{'dat
 --------------------------------------
 
 <titleGroup><title sort="FUNCTIONAL ECOLOGY" type="main">Functional Ecology</title><title type="short">Funct Ecol</title></titleGroup></publicationMeta><publicationMeta level="part" position="10"><doi origin="wiley">10.1111/fec.v34.1</doi><titleGroup><title type="main">Special Feature: An Integrative View of Senescence in Nature</title></titleGroup></publicationMeta>
+
+<selfCitationGroup>
+<citation type="self" xml:id="jpe13136-cit-1001"><author><familyName>Yeiser</familyName> <givenNames>JM</givenNames></author>, <author><familyName>Morgan</familyName> <givenNames>JJ</givenNames></author>, <author><familyName>Baxley</familyName> <givenNames>DL</givenNames></author>, <author><familyName>Chandler</familyName> <givenNames>RB</givenNames></author>, <author><familyName>Martin</familyName> <givenNames>JA</givenNames></author>. <articleTitle>Private land conservation has landscape‐scale benefits for wildlife in agroecosystems</articleTitle>. <journalTitle>J Appl Ecol</journalTitle>. <pubYear year="2018">2018</pubYear>;<vol>55</vol>:<pageFirst>1930</pageFirst>–<pageLast>1939</pageLast>. <url href="https://doi.org/10.1111/1365-2664.13136">https://doi.org/10.1111/1365-2664.13136</url></citation>
+</selfCitationGroup>
 
 <publicationMeta level="product"><doi origin="wiley" registered="yes">10.1111/(ISSN)1365-2435</doi><issn type="print">0269-8463</issn><issn type="electronic">1365-2435</issn><idGroup><id type="product" value="FEC"/></idGroup><titleGroup><title sort="FUNCTIONAL ECOLOGY" type="main">Functional Ecology</title><title type="short">Funct Ecol</title></titleGroup></publicationMeta><publicationMeta level="part" position="10"><doi origin="wiley">10.1111/fec.v34.1</doi><titleGroup><title type="main">Special Feature: An Integrative View of Senescence in Nature</title></titleGroup><copyright ownership="publisher"><i>Functional Ecology</i> © 2020 British Ecological Society</copyright><numberingGroup><numbering type="journalVolume" number="34">34</numbering><numbering type="journalIssue">1</numbering></numberingGroup><creators><creator creatorRole="guestEditor" xml:id="fec13431-cr-5001"><personName><givenNames>Jean‐François</givenNames> <familyName>Lemaître</familyName></personName></creator><creator creatorRole="guestEditor" xml:id="fec13431-cr-6001"><personName><givenNames>Jean‐Michel</givenNames> <familyName>Gaillard</familyName></personName></creator></creators><coverDate startDate="2020-01">January 2020</coverDate></publicationMeta>
 
@@ -81,6 +74,8 @@ Done!
 
 <passage><infon key="section_type">TITLE</infon><text>Identification of ganglioside GM2 activator playing a role in cancer cell migration through proteomic analysis of breast cancer secretomes</text></passage>
 
+<infon key="name_0">surname:Shin;given-names:Jihye</infon><infon key="name_1">surname:Kim;given-names:Gamin</infon><infon key="name_2">surname:Lee;given-names:Jong Won</infon><infon key="name_3">surname:Lee;given-names:Ji Eun</infon><infon key="name_4">surname:Kim;given-names:Yoo Seok</infon><infon key="name_5">surname:Yu;given-names:JongâHan</infon><infon key="name_6">surname:Lee;given-names:SeungâTaek</infon><infon key="name_7">surname:Ahn;given-names:Sei Hyun</infon><infon key="name_8">surname:Kim;given-names:Hoguen</infon><infon key="name_9">surname:Lee;given-names:Cheolju</infon>
+
 <passage><infon key="section_type">ABSTRACT</infon><text>Cancer cell secretomes are considered a potential source for the discovery of cancer markers. In this study, the secretomes of four breast cancer (BC) cell lines (Hs578T, MCFâ7, MDAâMBâ231, and SKâBRâ3) were profiled with liquid chromatographyâtandem mass spectrometry analysis. A total of 1410 proteins were identified with less than 1% false discovery rate, of which approximately 55% (796 proteins) were predicted to be secreted from cells. To find BCâspecific proteins among the secreted proteins, data of immunohistochemical staining compiled in the Human Protein Atlas were investigated by comparing the data of BC tissues with those of normal tissues. By applying various criteria, including higher expression level in BC tissues, higher predicted potential of secretion, and sufficient number of tandem mass spectra, 12 biomarker candidate proteins including ganglioside GM2 activator (GM2A) were selected for confirmation. Western blot analysis and ELISA for plasma samples of healthy controls and BC patients revealed elevation of GM2A in BC patients, especially those who were estrogen receptorânegative. Additionally, siRNAâmediated knockdown of GM2A in BC cells decreased migration in vitro, whereas the overexpression of GM2A led to an increase in cell migration. Although GM2A as a diagnostic and prognostic marker in BC should be carefully verified further, this study has established the potential role of GM2A in BC progression.</text></passage>
 
 <passage><infon key="section_type">SUPPL</infon><infon key="type">title_1</infon><offset>43120</offset><text>Supplementary Material</text></passage><passage><infon key="section_type">SUPPL</infon><infon key="type">title_1</infon><offset>43143</offset><text>DATA ACCESSIBILITY:</text></passage><passage><infon key="section_type">SUPPL</infon><infon key="type">paragraph</infon><offset>43163</offset><text>Raw sequence data are available at https://www.ncbi.nlm.nih.gov/bioproject/PRJNA955776. Additional data are available at Dryad https://doi.org/10.5061/dryad.4mw6m90cz. Dryad files include phenotypic measures, TPS files for geometric morphometric analysis, and genotypes used for quantitative trait loci mapping.</text></passage>
@@ -94,12 +89,20 @@ Done!
 --------------------------------------
 <article-title>PleThora: Pleural effusion and thoracic cavity segmentations in diseased lungs for benchmarking chest CT processing pipelines</article-title>
 
+Authors:
+<biblstruct><analytic><author role="corresp"><persname><forename type="first">Marie</forename><surname>Barbieux</surname></persname>
+or
+<contrib-group><contrib contrib-type="author"><name><surname>Bayer</surname><given-names>Uwe</given-names></name>
+
+
 <abstract id="mp14424-abs-0001"><p>This manuscript describes a dataset of thoracic cavity segmentations and discrete pleural effusion segmentations we have annotated on 402 computed tomography (CT) scans acquired from patients with non&#x02010;small cell lung cancer. The segmentation of these anatomic regions precedes fundamental tasks in image analysis pipelines such as lung structure segmentation, lesion detection, and radiomics feature extraction. Bilateral thoracic cavity volumes and pleural effusion volumes were manually segmented on CT scans acquired from The Cancer Imaging Archive &#x0201c;NSCLC Radiomics&#x0201d; data collection. Four hundred and two thoracic segmentations were first generated automatically by a U&#x02010;Net based algorithm trained on chest CTs without cancer, manually corrected by a medical student to include the complete thoracic cavity (normal, pathologic, and atelectatic lung parenchyma, lung hilum, pleural effusion, fibrosis, nodules, tumor, and other anatomic anomalies), and revised by a radiation oncologist or a radiologist. Seventy&#x02010;eight pleural effusions were manually segmented by a medical student and revised by a radiologist or radiation oncologist. Interobserver agreement between the radiation oncologist and radiologist corrections was acceptable. All expert&#x02010;vetted segmentations are publicly available in NIfTI format through The Cancer Imaging Archive at <ext-link ext-link-type="uri" xlink:href="https://doi.org/10.7937/tcia.2020.6c7y-gq39">https://doi.org/10.7937/tcia.2020.6c7y&#x02010;gq39</ext-link>. Tabular data detailing clinical and technical metadata linked to segmentation cases are also available. Thoracic cavity segmentations will be valuable for developing image analysis pipelines on pathologic lungs &#x02014; where current automated algorithms struggle most. In conjunction with gross tumor volume segmentations already available from &#x0201c;NSCLC Radiomics,&#x0201d; pleural effusion segmentations may be valuable for investigating radiomics profile differences between effusion and primary tumor or training algorithms to discriminate between them.</p></abstract>
 
 tree = ET.parse(xml_file_path)
 tree.find()
 
 <notes notes-type="data-availability"><title>Data availability</title><p>All data are available at <ext-link ext-link-type="uri" xlink:href="https://doi.org/10.5061/dryad.wpzgmsbps">https://doi.org/10.5061/dryad.wpzgmsbps</ext-link>.</p></notes>
+or
+<sec sec-type="data-availability" id="ece36144-sec-0019"><title>DATA AVAILABILITY STATEMENT</title><p>Data are available at Dryad Digital Repository at: <ext-link ext-link-type="uri" xlink:href="https://doi.org/10.5061/dryad.zw3r22854" specific-use="dataset is-supplemented-by">https://doi.org/10.5061/dryad.zw3r22854</ext-link>. Two sequences used in our reference library are on GenBank (accession numbers MH714866 and MH718435).</p></sec>
 
 [{'dataset_id': 'https://doi.org/10.5061/dryad.wpzgmsbps', 'type': 'Primary'}]
 <notes notes-type="data-availability"><title>Data availability</title><p>All data are available at <ext-link ext-link-type="uri" xlink:href="https://doi.org/10.5061/dryad.wpzgmsbps">https://doi.org/10.5061/dryad.wpzgmsbps</ext-link>.</p></notes><notes notes-type="data-availability"><title>Code availability</title><p>Code is available at <ext-link ext-link-type="uri" xlink:href="https://doi.org/10.5061/dryad.wpzgmsbps">https://doi.org/10.5061/dryad.wpzgmsbps</ext-link>.</p></notes>
