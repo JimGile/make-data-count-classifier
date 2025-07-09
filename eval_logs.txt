@@ -1,0 +1,121 @@
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Processing article 0/30: 10.1002_2017jc013030, type: XML
+Preparing input with length: 1441
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': '10.17882/49388', 'type': 'Primary'}, {'dataset_id': '10.17882/47142', 'type': 'Primary'}, {'dataset_id': '10.5194/essd-2017-58', 'type': 'Primary'}]
+Processing article 1/30: 10.1002_anie.201916483, type: XML
+Preparing input with length: 1008
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': 'Missing', 'type': 'Missing'}]
+Processing article 2/30: 10.1002_anie.202005531, type: XML
+Preparing input with length: 248
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': 'Missing', 'type': 'Missing'}]
+Processing article 3/30: 10.1002_anie.202007717, type: XML
+Preparing input with length: 1384
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': 'Missing', 'type': 'Missing'}]
+Processing article 4/30: 10.1002_chem.201902131, type: XML
+Preparing input with length: 1196
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': 'Missing', 'type': 'Missing'}]
+Processing article 5/30: 10.1002_chem.201903120, type: XML
+Preparing input with length: 1830
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': 'Missing', 'type': 'Missing'}]
+Processing article 6/30: 10.1002_chem.202000235, type: XML
+Preparing input with length: 772
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': 'Missing', 'type': 'Missing'}]
+Processing article 7/30: 10.1002_chem.202001412, type: XML
+Preparing input with length: 1102
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': 'Missing', 'type': 'Missing'}]
+Processing article 8/30: 10.1002_chem.202001668, type: XML
+Preparing input with length: 826
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': 'Missing', 'type': 'Missing'}]
+Processing article 9/30: 10.1002_chem.202003167, type: XML
+Preparing input with length: 1831
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': 'Missing', 'type': 'Missing'}]
+Processing article 10/30: 10.1002_cssc.202201821, type: XML
+Preparing input with length: 1547
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': '10.5281/zenodo.7074790', 'type': 'Primary'}]
+Processing article 11/30: 10.1002_ece3.3985, type: XML
+Preparing input with length: 1659
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': 'Missing', 'type': 'Missing'}]
+Processing article 12/30: 10.1002_ece3.4466, type: XML
+Preparing input with length: 1762
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': 'Missing', 'type': 'Missing'}]
+Processing article 13/30: 10.1002_ece3.5260, type: XML
+Preparing input with length: 2476
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': '10.5061/dryad.2f62927', 'type': 'Primary'}]
+Processing article 14/30: 10.1002_ece3.5395, type: XML
+Preparing input with length: 2346
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': '10.12345/12345', 'type': 'Primary'}, {'dataset_id': '10.5441/001/1.v1cs4nn0', 'type': 'Primary'}, {'dataset_id': '10.5441/001/1.c42j3js7', 'type': 'Primary'}, {'dataset_id': '10.5441/001/1.4192t2j4', 'type': 'Primary'}, {'dataset_id': '10.5441/001/1.ck04mn78', 'type': 'Primary'}]
+Processing article 15/30: 10.1002_ece3.6144, type: XML
+Preparing input with length: 2179
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': '10.5061/dryad.zw3r22854', 'type': 'Primary'}]
+Processing article 16/30: 10.1002_ece3.6303, type: XML
+Preparing input with length: 2544
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: []
+Processing article 17/30: 10.1002_ece3.6784, type: XML
+Preparing input with length: 2740
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': '10.1007/s00435-017-0386-3', 'type': 'Primary'}, {'dataset_id': '10.1007/s00435-0386-3', 'type': 'Primary'}]
+Processing article 18/30: 10.1002_ece3.961, type: XML
+Preparing input with length: 1714
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': 'Missing', 'type': 'Missing'}]
+Processing article 19/30: 10.1002_ece3.9627, type: XML
+Preparing input with length: 2420
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': '10.5061/dryad.b8gtht7h3', 'type': 'Primary'}]
+Processing article 20/30: 10.1002_ecs2.1280, type: PDF
+Preparing input with length: 3265
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': '10.5061/dryad.p3fg9', 'type': 'Primary'}, {'dataset_id': '10.1002/ecs2.1280', 'type': 'Primary'}]
+Processing article 21/30: 10.1002_ecs2.4619, type: XML
+Preparing input with length: 2005
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': '10.25349/D9QW5X', 'type': 'Secondary'}]
+Processing article 22/30: 10.1002_ejic.201900904, type: XML
+Preparing input with length: 986
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': 'Missing', 'type': 'Missing'}]
+Processing article 23/30: 10.1002_ejoc.202000139, type: PDF
+Preparing input with length: 910
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: []
+Processing article 24/30: 10.1002_ejoc.202000916, type: XML
+Preparing input with length: 585
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': 'Missing', 'type': 'Missing'}]
+Processing article 25/30: 10.1002_esp.5058, type: PDF
+Preparing input with length: 4434
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': '10.1002/esp.5058', 'type': 'Primary'}, {'dataset_id': '10.1002/esp.4637', 'type': 'Primary'}, {'dataset_id': '10.5066/P9FW6E8K', 'type': 'Primary'}, {'dataset_id': '10.1029/2005JF000416', 'type': 'Primary'}]
+Processing article 26/30: 10.1002_esp.5090, type: XML
+Preparing input with length: 2601
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': '10.1080/08120090802546977', 'type': 'Secondary'}, {'dataset_id': '10.1177/0959683613515732', 'type': 'Secondary'}]
+Processing article 27/30: 10.1002_mp.14424, type: XML
+Preparing input with length: 2719
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': '10.7937/K9/TCIA.2015.PF0M9REI', 'type': 'Primary'}, {'dataset_id': '10.7937/tcia.2020.6c7y-gq39', 'type': 'Primary'}]
+Processing article 28/30: 10.1002_nafm.10870, type: PDF
+Preparing input with length: 4945
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+Parsed response: [{'dataset_id': '10.5066/P9GTUMAY.', 'type': 'Primary'}, {'dataset_id': '10.5066/P94BH3W0.', 'type': 'Secondary'}, {'dataset_id': '10.5066/P90A4UGJ.', 'type': 'Primary'}, {'dataset_id': '10.5066/F75M63X0.', 'type': 'Secondary'}]
+Processing article 29/30: 10.1007_jhep07(2018)134, type: PDF
+Preparing input with length: 888
+Parsed response: [{'dataset_id': 'Missing', 'type': 'Missing'}]
+Processed articles DataFrame shape: (30, 6)
