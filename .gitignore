@@ -194,6 +194,9 @@ cython_debug/
 .cursorindexingignore
 
 kaggle/
+results/
+save/
+
 processed_articles_2.csv
 processed_articles_3.csv
 processed_articles_4.csv
