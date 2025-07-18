@@ -1,11 +1,13 @@
 # mdc_data_processing_utils.py
 
 import os
+import concurrent.futures
 import re
 import json
 from dataclasses import dataclass, field, asdict
 from typing import Set, List, Optional, Dict, Any
 import fitz
+from fitz import Document
 import pymupdf4llm
 from lxml import etree # For XML parsing
 from spacy.language import Language
@@ -264,7 +266,7 @@ class MdcFileTextExtractor():
         max_page_no = doc.page_count - 1
         page_no = 0
         for page in doc:
-            page_text = page.get_textpage().extractTEXT().lower()
+            page_text = self.clean_text(page.get_textpage().extractTEXT().lower())
             for keyword in simple_reference_keywords:
                 # Look for the keyword as a potential heading in raw text.
                 # This is a heuristic: check if it's on its own line or at the very start.
@@ -273,6 +275,57 @@ class MdcFileTextExtractor():
                     return min(page_no, max_page_no) # Return the index of the page where references start
             page_no += 1
         return max_page_no # Return total page count if no reference section found
+    
+    def extract_pdf_plain_text(self, doc: Document, pages: range) -> str:
+        """
+        Returns the plain text of the given PyMuPDF document object.
+        
+        Args:
+            doc (fitz.Document): The PyMuPDF document object.
+            
+        Returns:
+            the plain text of the given PyMuPDF document object.
+        """
+        plain_text = ""
+        for page in doc:
+            page_text = self.clean_text(page.get_textpage().extractTEXT())
+            plain_text += page_text + "||"
+        return plain_text
+    
+    def convert_pdf_doc_to_markdown(self, doc: Document, pages: range) -> str:
+        """
+        Converts the given PyMuPDF document object to Markdown or plain text.
+        
+        Args:
+            doc (fitz.Document): The PyMuPDF document object.
+            
+        Returns:
+            a Markdown representation of the given PyMuPDF document.
+        """
+        return pymupdf4llm.to_markdown(
+                    doc, 
+                    pages=pages,
+                    ignore_images=True, 
+                    ignore_graphics=True, 
+                    ignore_code=True
+                )
+    
+    def extract_markdown_from_pdf(self, doc: Document, pages: range, timeout_seconds=15) -> str:
+        """
+        Attempts to convert a fitz PDF Document to markdown within the specified timeout.
+        Returns the markdown content or a plain text string if an exception or timeout occurs.
+        """
+        # print(f"Processing {pdf_path} with a {timeout_seconds}-second timeout...")
+        with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(self.convert_pdf_doc_to_markdown, doc, pages)
+            try:
+                return future.result(timeout=timeout_seconds)
+            except concurrent.futures.TimeoutError:
+                print(f"Timeout: Conversion of PDF took longer than {timeout_seconds} seconds and was skipped.")
+                return self.extract_pdf_plain_text(doc, pages)
+            except Exception as e:
+                print(f"Error converting PDF to markdown: {e}. Returing plain text.")
+                return self.extract_pdf_plain_text(doc, pages)
 
     def extract_text_from_file(self) -> str:
         """Extracts text from XML, PDF, or TXT files."""
@@ -303,13 +356,7 @@ class MdcFileTextExtractor():
                 # pymupdf4llm.to_markdown uses 0-based indexing for pages.
                 # 'end_page' parameter is exclusive, so to get up to page N, we set end_page=N+1.
                 # If ref_start_page_idx is 5, we want pages 0-4, so end_page=5.
-                markdown_content = pymupdf4llm.to_markdown(
-                    doc, 
-                    pages=pages,
-                    ignore_images=True, 
-                    ignore_graphics=True, 
-                    ignore_code=True
-                )
+                markdown_content = self.extract_markdown_from_pdf(doc, pages)
                 
                 # Step 3: After getting the markdown, perform the precise line-by-line check
                 # to ensure we stop exactly at a *Markdown heading* for references.
@@ -327,22 +374,6 @@ class MdcFileTextExtractor():
                 return ""
             finally:
                 doc.close() # Ensure the document is closed even if errors occur
-
-
-            # try:
-            #     text = pymupdf4llm.to_markdown(self.file_path, ignore_images=True, ignore_graphics=True)
-            #     lines = text.split('\n')
-            #     text_before_references = []
-            #     for line in lines:
-            #         # Check if the current line is a reference heading
-            #         if self.is_reference_heading_line(line):
-            #             break # Stop processing lines, we've found the references section
-            #         else:
-            #             text_before_references.append(line) # Keep adding lines if not a reference heading
-            #     return self.clean_text("\n".join(text_before_references))
-            # except Exception as e:
-            #     print(f"Error parsing PDF {self.file_path}: {e}")
-            #     return ""
         elif self.file_path.endswith(".txt"):
             with open(self.file_path, 'r', encoding='utf-8') as f:
                 return f.read().strip()
