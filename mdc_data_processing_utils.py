@@ -19,14 +19,18 @@ class DatasetCitation:
     citation_context: str = ""
     citation_type: Optional[str] = None # "Primary", "Secondary", or "Missing" - for ground truth during training
     max_contet_len = 400
+    start_idx = 0
+    end_idx = 0
 
-    def set_citation_context(self, context: str):
+    def set_citation_context(self, context: str, start_idx: int, end_idx: int):
         """Sets the citation context, cleaning it and limiting to last 400 characters."""
         if context:
             # Replace newlines with spaces, remove brackets, and normalize whitespace
             context = context.replace('\n', ' ').replace('[', '').replace(']', '')
             context = re.sub(r'\s+', ' ', context.strip())
             self.citation_context = context[-self.max_contet_len:] # Limit to last 400 characters
+            self.start_idx = start_idx
+            self.end_idx = end_idx
 
     def is_doi(self)-> bool:
         return self.dataset_id.startswith("10.")
@@ -122,6 +126,17 @@ class SubmissionData:
     def to_json(self):
         return json.dumps(self.to_dict(), separators=(',', ':'))
     
+
+def convert_pdf_doc_to_markdown_worker(file_path: str, pages: range):
+    result = pymupdf4llm.to_markdown(
+        file_path,
+        pages=pages,
+        ignore_images=True,
+        ignore_graphics=True,
+        ignore_code=True
+    )
+    return result
+
 
 class MdcFileTextExtractor():
 
@@ -292,36 +307,19 @@ class MdcFileTextExtractor():
             plain_text += page_text + "||"
         return plain_text
     
-    def convert_pdf_doc_to_markdown(self, doc: Document, pages: range) -> str:
-        """
-        Converts the given PyMuPDF document object to Markdown or plain text.
-        
-        Args:
-            doc (fitz.Document): The PyMuPDF document object.
-            
-        Returns:
-            a Markdown representation of the given PyMuPDF document.
-        """
-        return pymupdf4llm.to_markdown(
-                    doc, 
-                    pages=pages,
-                    ignore_images=True, 
-                    ignore_graphics=True, 
-                    ignore_code=True
-                )
-    
-    def extract_markdown_from_pdf(self, doc: Document, pages: range, timeout_seconds=15) -> str:
+    def extract_markdown_from_pdf(self, doc: Document, pages: range, timeout_seconds=5) -> str:
         """
         Attempts to convert a fitz PDF Document to markdown within the specified timeout.
         Returns the markdown content or a plain text string if an exception or timeout occurs.
         """
-        # print(f"Processing {pdf_path} with a {timeout_seconds}-second timeout...")
         with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(self.convert_pdf_doc_to_markdown, doc, pages)
+            future = executor.submit(convert_pdf_doc_to_markdown_worker, self.file_path, pages)
             try:
                 return future.result(timeout=timeout_seconds)
             except concurrent.futures.TimeoutError:
-                print(f"Timeout: Conversion of PDF took longer than {timeout_seconds} seconds and was skipped.")
+                print(f"Timeout: Conversion of PDF took longer than {timeout_seconds}. Returing plain text.")
+                future.cancel()  # Attempt to cancel the future
+                executor.shutdown(wait=False, cancel_futures=True)  # Stop the process immediately
                 return self.extract_pdf_plain_text(doc, pages)
             except Exception as e:
                 print(f"Error converting PDF to markdown: {e}. Returing plain text.")
@@ -357,6 +355,7 @@ class MdcFileTextExtractor():
                 # 'end_page' parameter is exclusive, so to get up to page N, we set end_page=N+1.
                 # If ref_start_page_idx is 5, we want pages 0-4, so end_page=5.
                 markdown_content = self.extract_markdown_from_pdf(doc, pages)
+                print(markdown_content)
                 
                 # Step 3: After getting the markdown, perform the precise line-by-line check
                 # to ensure we stop exactly at a *Markdown heading* for references.
@@ -438,11 +437,11 @@ class MdcFileTextExtractor():
             context = " ".join(context_sentences)
             if self.is_text_data_related(context):
                 # Set citation context to the first data related match in the text
-                dataset_citation.set_citation_context(context)
+                dataset_citation.set_citation_context(context, start_idx, end_idx)
                 return dataset_citation
             elif not dataset_citation.citation_context and citation_type and citation_type != "Missing":
                 # Set citation context to the first match in the text
-                dataset_citation.set_citation_context(context)
+                dataset_citation.set_citation_context(context, start_idx, end_idx)
 
         return dataset_citation
 
