@@ -196,6 +196,7 @@ cython_debug/
 kaggle/
 results/
 save/
+processed_files/
 
 processed_articles_2.csv
 processed_articles_3.csv
