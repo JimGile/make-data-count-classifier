@@ -9,6 +9,7 @@ from typing import List, Optional, Dict, Any, Tuple, ClassVar
 from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
 import fitz
 from fitz import Document
+import pymupdf
 import pymupdf4llm
 from lxml import etree # For XML parsing
 import pandas as pd
@@ -25,6 +26,7 @@ from spacy.tokens import Doc, Token
 @dataclass
 class DatasetCitation:
     dataset_id: str = ""
+    citation_sentence: str = ""
     citation_context: str = ""
     citation_type: Optional[str] = None # "Primary", "Secondary", or "Missing" - for ground truth during training
     max_contet_len: int = 400
@@ -32,15 +34,23 @@ class DatasetCitation:
     start_sentence_idx: int = 0
     end_sentence_idx: int = 0
     section_name: Optional[str] = None # Still useful to know the section name
+    primary_score: int = 0
+    secondary_score: int = 0
+    data_score: int = 0
 
-    # Removed section_start_char_idx as raw_text is no longer stored in ArticleData
+    # Class-level constant for typical sections
+    PRIMARY_SCORE_WORDS: ClassVar[List[str]] = [" we ", " our ", " the author ", " the authors ", "created", "generated", "deposited", "presented", "made available", "archived", "submitted", "uploaded", "sequenced", "segmented"]
+    SECONDARY_SCORE_WORDS: ClassVar[List[str]] = ["accessed", "retrieved", "downloaded", "obtained", "data from", "data used", "presented", ]
+    DATA_SCORE_WORDS: ClassVar[List[str]] = ["dataset", "database", "segment", "sequence", "repositor", "available", "access", "program", "associated", "referring", "supplemental", "supplementary", "supporting", "digital", "model", "author", "data",]
+    # DATA_RELATED_KEYWORDS = ['data release', 'data associated', 'data referring', 'data availability', 'data access', 'data source', 'program data', 'our data', 'the data', 'dataset', 'database', ' segmented by', 'digital elevation model']
 
-    def set_citation_context(self, context: str, start_sentence_idx: int, end_sentence_idx: int):
+    def set_citation_context(self, sentence: str, context: str, start_sentence_idx: int, end_sentence_idx: int):
         """
         Sets the citation context, cleaning it and limiting to last 400 characters.
         Note: 'context' is now expected to be the pre-extracted string.
         'start_sentence_idx' and 'end_sentence_idx' are metadata about its location.
         """
+        self.citation_sentence = sentence
         if context:
             # Replace newlines with spaces, remove brackets, and normalize whitespace
             context = context.replace('\n', ' ').replace('[', '').replace(']', '')
@@ -48,7 +58,17 @@ class DatasetCitation:
             self.citation_context = context[-self.max_contet_len:] # Limit to last 400 characters
             self.start_sentence_idx = start_sentence_idx
             self.end_sentence_idx = end_sentence_idx
+            self.primary_score = self.score_context(context, DatasetCitation.PRIMARY_SCORE_WORDS)
+            self.secondary_score = self.score_context(context, DatasetCitation.SECONDARY_SCORE_WORDS)
+            self.data_score = self.score_context(context, DatasetCitation.DATA_SCORE_WORDS)
 
+    def score_context(self, context: str, score_words: list[str]) -> int:
+        score = 0
+        context_lower = context.lower()
+        for keyword in score_words:
+            score += context_lower.count(keyword)
+        return score
+    
     def is_doi(self)-> bool:
         return self.dataset_id.startswith("10.")
     
@@ -98,7 +118,6 @@ class ArticleData:
     author: str = ""
     abstract: str = ""
     sentences: List[str] = field(default_factory=list)
-    sentence_char_spans: List[tuple[int, int]] = field(default_factory=list) # Still needed for external context extraction
     sections: List[ArticleSection] = field(default_factory=list)
     dataset_citations: List[DatasetCitation] = field(default_factory=list)
 
@@ -146,12 +165,11 @@ class ArticleData:
         Args:
             sentence_data: A list of tuples, where each tuple is (sentence_text, start_char_idx, end_char_idx).
         """
-        self.sentences = [sent.text.replace(' ||Block break.', '') for sent in nlp_sentences]
-        
-        
+        self.sentences = [sent.text.replace('This is a block break.', '').replace('||PAGE||', '') for sent in nlp_sentences]
+                
         # After setting sentences, identify sections based on them
         self._identify_sections()
-        # print(self.sentences)
+        print(self.sentences)
 
     def _identify_sections(self):
         """
@@ -183,7 +201,7 @@ class ArticleData:
                 self.sections.append(new_section)
                 last_section_idx = len(self.sections) - 1
                 if 'Abstract' == section_name or (not self.abstract and 'Introduction' == section_name):
-                    self.abstract = self.remove_extra_spaces(" ".join(self.sentences[i:i+4]))
+                    self.abstract = self.remove_extra_spaces(" ".join(self.sentences[i:i+3]))
         
         # After iterating through all sentences, set the end_sentence_idx for the very last identified section.
         # It extends to the end of the sentences list.
@@ -226,7 +244,7 @@ class ArticleData:
         """
         for citation in self.dataset_citations:
             # Use the start_sentence_idx of the citation to find its containing section
-            containing_section = self.find_section_for_sentence_index(citation.start_sentence_idx)
+            containing_section = self.find_section_for_sentence_index(citation.end_sentence_idx)
             if containing_section:
                 citation.section_name = containing_section.name
                 # No section_start_char_idx to assign here
@@ -252,7 +270,7 @@ class ArticleData:
         """
         data = asdict(self)
         data.pop('sentences', None) # Exclude sentences from serialization
-        data.pop('sections', None) # Exclude sentences from serialization
+        # data.pop('sections', None) # Exclude sentences from serialization
         # data['sections'] = [s.to_dict() for s in self.sections]
         data['dataset_citations'] = [c.to_dict() for c in self.dataset_citations]
         return data
@@ -401,36 +419,115 @@ class MdcFileTextExtractor():
         Returns:
             ArticleData: An instance of ArticleData with extracted information.
         """
-        doc = nlp(full_text)
         article_data = ArticleData(article_id=self.article_id)
+        article_data.author = self.extract_author_name(full_text=full_text, nlp=nlp)
+        full_text = full_text.replace('||PAGE||', '')
+        doc = nlp(full_text)
         article_data.set_sentences(list(doc.sents))
         return article_data
+    
+    def extract_author_name(self, full_text: str, nlp: Language) -> str:
+        """
+        Extracts potential primary author name from the beginning of a research article's text
+        using spaCy's Named Entity Recognition. It attempts to isolate the author section
+        and applies heuristics to filter out non-author entities.
 
+        Args:
+            full_text (str): The complete text content of the research article,
+                            typically extracted from a PDF.
+
+        Returns:
+            List[str]: A list of unique strings, each representing a potential author name,
+                    sorted alphabetically. Returns an empty list if no authors are found.
+        """
+        if not full_text or not full_text.strip():
+            return ""
+
+        author_section_text = full_text.split('||PAGE||')[0]
+        author_section_text = author_section_text.replace('1\n,', ',').replace('1,', ',').replace('\u2019', "'")
+
+        # 2. Process the isolated author section with spaCy
+        doc = nlp(author_section_text)
+
+        # 3. Extract PERSON entities and apply initial filtering
+        potential_authors: list[str] = []
+        for ent in doc.ents:
+            if ent.label_ == "PERSON":
+                name = ent.text.strip()
+                # Basic filtering to reduce false positives:
+                # - Exclude very short strings (e.g., single letters, common conjunctions)
+                # - Exclude common stop words (e.g., "The", "And")
+                # - Exclude all-uppercase strings that might be acronyms (e.g., "WHO", "NASA")
+                # - Ensure it contains at least one space (e.g., "John Doe") or is a capitalized
+                #   single word that's longer than 2 characters (e.g., "Smith").
+                if (len(name) > 1 and
+                    name.lower() not in nlp.Defaults.stop_words and
+                    not name.isupper() and
+                    (' ' in name or (name[0].isupper() and len(name) > 2))):
+                    
+                    potential_authors.append(name)
+
+        # 4. Apply more advanced heuristics to filter out non-author names
+        # This step is crucial for accuracy and often requires tuning.
+        for author in potential_authors:
+            # Heuristic 1: Filter out names that contain common affiliation keywords.
+            # This is a simple check; more robust solutions might use spaCy's dependency
+            # parsing to check if a PERSON entity is part of an ORG entity.
+            affiliation_keywords = ["univ", "observ", "institute", "department", "center", "lab",
+                                    "hospital", "college", "school", "inc.", "ltd.", "company",
+                                    "corp.", "group", "foundation", "research", "table", "figure"]
+            if any(keyword in author.lower() for keyword in affiliation_keywords):
+                continue # Skip if it looks like an affiliation
+
+            # Heuristic 2: Filter out names that contain email patterns or ORCID patterns.
+            if '@' in author or re.search(r'\b\d{4}-\d{4}-\d{4}-\d{3}[\dX]\b', author):
+                continue # Skip if it contains an email or ORCID
+
+            # Heuristic 3: Filter out names that are likely just initials or very short.
+            # This is partially covered by initial filtering, but can be refined.
+            # E.g., "J. D." might be an author, but "J." alone is unlikely.
+            if len(author.split()) == 1 and len(author) <= 2 and author.isupper():
+                continue # Skip single-letter or two-letter uppercase (e.g., "JD")
+
+            name = ""
+            words = author.split()
+            for word in words:
+                if len(word) >=2 and not word.isupper():
+                    name += word + " "
+            return name.strip()
+
+        # Convert to list and sort for consistent output
+        return ""
+    
     # 4.2. Function to extract context around an ID
-    def populate_context_around_citation(self, sentences, dataset_citation: DatasetCitation, window_size_sentences: int = 3) -> DatasetCitation:
+    def populate_context_around_citation(self, article_data: ArticleData, dataset_citation: DatasetCitation, window_size_sentences: int = 3) -> DatasetCitation:
         """
         Extracts a window of sentences around a given dataset citation in the text.
         Uses spaCy for sentence segmentation.
         """
         dataset_id = dataset_citation.dataset_id
         citation_type = dataset_citation.citation_type
+        sentences = article_data.sentences
         if not sentences or not dataset_id or dataset_id == "Missing":
             return dataset_citation
             
         # Find all occurrences of the dataset_id (case-insensitive)
         matches = [(i, sent) for i, sent in enumerate(sentences) if dataset_id.lower() in sent.lower()]
         for idx, sentence in matches:
-            start_idx = max(0, idx - window_size_sentences)
+            sentence = sentences[idx]
+            section = article_data.find_section_for_sentence_index(idx)
+            floor = section.start_sentence_idx if section else 0
+            start_idx = max(floor, idx - window_size_sentences)
             end_idx = min(len(sentences), idx + 1)
             context_sentences = sentences[start_idx:end_idx]
             context = " ".join(context_sentences)
             if self.is_text_data_related(context):
                 # Set citation context to the first data related match in the text
-                dataset_citation.set_citation_context(context, start_idx, end_idx)
+                dataset_citation.set_citation_context(sentence, context, start_idx, end_idx)
                 return dataset_citation
             elif not dataset_citation.citation_context and citation_type and citation_type != "Missing":
                 # Set citation context to the first match in the text
-                dataset_citation.set_citation_context(context, start_idx, end_idx)
+                dataset_citation.set_citation_context(sentence, context, start_idx, end_idx)
 
         return dataset_citation
 
@@ -450,7 +547,7 @@ class MdcFileTextExtractor():
             gt_id = self.strip_dataset_id(gt['dataset_id'])
             gt_type = gt.get('type', 'Primary')
             citation = DatasetCitation(dataset_id=gt_id, citation_type=gt_type)
-            citation = self.populate_context_around_citation(article_data.sentences, citation)
+            citation = self.populate_context_around_citation(article_data, citation)
             article_data.add_dataset_citation(citation)
 
         article_data.assign_citations_to_sections()
@@ -465,7 +562,7 @@ class MdcFileTextExtractor():
             # the set_citation_context and add_dataset_citation methods do all of the appropriate filtering
             for dataset_id in potential_dataset_ids:
                 citation = DatasetCitation(dataset_id=dataset_id)
-                citation = self.populate_context_around_citation(article_data.sentences, citation)
+                citation = self.populate_context_around_citation(article_data, citation)
                 article_data.add_dataset_citation(citation)
 
         article_data.assign_citations_to_sections()
@@ -481,7 +578,8 @@ class MdcFileTextExtractor():
         Returns:
             Set[str]: A set of unique dataset IDs found in the text.
         """
-        dataset_ids = set()
+        ds_id_list = []
+        ds_id_set = set()
         for regex in MdcFileTextExtractor.COMPILED_DATASET_ID_REGEXES:
             for match in re.finditer(regex, text):
                 if regex.pattern == MdcFileTextExtractor.DOI_PATTERN:
@@ -489,8 +587,10 @@ class MdcFileTextExtractor():
                 else:
                     dataset_id = match.group(0)
                 dataset_id = dataset_id.strip('.')
-                dataset_ids.add(dataset_id)
-        return list(dataset_ids)
+                ds_id_set.add(dataset_id)
+                if len(ds_id_set) > len(ds_id_list):
+                    ds_id_list.append(dataset_id)
+        return ds_id_list
     
     def strip_dataset_id(self, dataset_id: str)-> str:
         return dataset_id.replace("https://doi.org/", "").replace("http://dx.doi.org/", "").replace("doi:", "").strip()
@@ -510,15 +610,21 @@ def _read_pdf_to_markdown(pdf_filepath):
     )
     return result
 
-def _read_pdf_plain_text(pdf_filepath):
+def _read_pdf_plain_text(pdf_filepath, footer_margin=50, header_margin=50):
+    flags = pymupdf.TEXTFLAGS_BLOCKS | pymupdf.TEXT_DEHYPHENATE
     plain_text = ""
     with(fitz.open(pdf_filepath)) as doc:
         for page in doc:
-            # page_text = page.get_textpage().extractTEXT()
-            blocks = page.get_textpage().extractBLOCKS()
-            blocks.sort(key=lambda b: (b[0], b[1]))
+            clip = +page.rect
+            clip.y1 -= footer_margin  # Remove footer area
+            clip.y0 += header_margin  # Remove header area
+            blocks = page.get_textpage(clip=clip, flags=flags).extractBLOCKS()
+            # Sort by horizontal direction then by ascending vertical to handle multi column layouts.
+            blocks.sort(key=lambda b: (int(b[0]), int(b[1])))
             for block in blocks:
-                plain_text += block[4] + "||Block break. "
+                plain_text += str(block[4]).replace('/\n', '/').replace('\n', ' ') + "This is a block break.\n"
+            plain_text += "||PAGE||"
+    print(plain_text)
     return plain_text
 
 # --- New Mock XML Processing Function ---
