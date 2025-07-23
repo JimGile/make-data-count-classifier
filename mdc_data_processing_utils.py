@@ -39,9 +39,9 @@ class DatasetCitation:
     data_score: int = 0
 
     # Class-level constant for typical sections
-    PRIMARY_SCORE_WORDS: ClassVar[List[str]] = [" we ", " our ", " the author ", " the authors ", "created", "generated", "deposited", "presented", "made available", "archived", "submitted", "uploaded", "sequenced", "segmented"]
-    SECONDARY_SCORE_WORDS: ClassVar[List[str]] = ["accessed", "retrieved", "downloaded", "obtained", "data from", "data used", "presented", ]
-    DATA_SCORE_WORDS: ClassVar[List[str]] = ["dataset", "database", "segment", "sequence", "repositor", "available", "access", "program", "associated", "referring", "supplemental", "supplementary", "supporting", "digital", "model", "author", "data",]
+    PRIMARY_SCORE_WORDS: ClassVar[List[str]] = [" we ", " our ", "the author", "created", "generated", "deposited", "presented", "made available", "archived", "submitted", "uploaded", "sequenced", "segmented", "vetted", "openly available", "freely available", "data avail", "data access", "doi.org", "dryad", "zenodo"]
+    SECONDARY_SCORE_WORDS: ClassVar[List[str]] = ["accessed", "retrieved", "downloaded", "obtained", "data from", "data used", "presented", "publicly available", ]
+    DATA_SCORE_WORDS: ClassVar[List[str]] = ["dataset", "database", "segment", "sequence", "repositor", "archive", "available", "access", "program", "associated", "referring", "supplementa", "supporting", "digital", "model", "file", "author", "data",]
     # DATA_RELATED_KEYWORDS = ['data release', 'data associated', 'data referring', 'data availability', 'data access', 'data source', 'program data', 'our data', 'the data', 'dataset', 'database', ' segmented by', 'digital elevation model']
 
     def set_citation_context(self, sentence: str, context: str, start_sentence_idx: int, end_sentence_idx: int):
@@ -139,6 +139,7 @@ class ArticleData:
             # Don't include partial dataset_ids
             if ds_id_lower not in existing_ids:
                 self._assign_citation_to_section(dataset_citation)
+                self._update_citation_primary_score(dataset_citation)
                 self.dataset_citations.append(dataset_citation)
         
     def get_data_for_llm(self) -> list[dict[str, str]]:
@@ -165,11 +166,12 @@ class ArticleData:
         Args:
             sentence_data: A list of tuples, where each tuple is (sentence_text, start_char_idx, end_char_idx).
         """
-        self.sentences = [sent.text.replace('This is a block break.', '').replace('||PAGE||', '') for sent in nlp_sentences]
+        sentences = [sent.text.replace('This is a block break.', '').replace('||PAGE||', '') for sent in nlp_sentences]
+        self.sentences = [s for s in sentences if s != ""]
                 
         # After setting sentences, identify sections based on them
         self._identify_sections()
-        print(self.sentences)
+        # print(self.sentences)
 
     def _identify_sections(self):
         """
@@ -219,11 +221,6 @@ class ArticleData:
         if not section_name and not self.abstract and normalized_sentence.startswith("abstract"):
             section_name = "Abstract"
 
-        # for norm_sec in normalized_typical_sections:
-        #     if normalized_sentence.startswith(norm_sec):
-        #         section_name = ArticleSection.TYPICAL_ARTICLE_SECTIONS[normalized_typical_sections.index(norm_sec)]
-        #         print(section_name, normalized_sentence)
-        #         return section_name
         return section_name
 
     def find_section_for_sentence_index(self, sentence_idx: int) -> Optional[ArticleSection]:
@@ -263,6 +260,15 @@ class ArticleData:
         else:
             citation.section_name = "Unknown"
 
+    def _update_citation_primary_score(self, citation: DatasetCitation):
+        if self.author:
+            id_idx = citation.citation_context.find(citation.dataset_id)
+            author_names = self.author.split()
+            for name in author_names:
+                name_idx = citation.citation_context.find(name)
+                if name_idx > 0 and name_idx < id_idx:
+                    citation.primary_score += 2
+
     def to_dict(self):
         """
         Converts the ArticleData object to a dictionary for serialization,
@@ -270,7 +276,7 @@ class ArticleData:
         """
         data = asdict(self)
         data.pop('sentences', None) # Exclude sentences from serialization
-        # data.pop('sections', None) # Exclude sentences from serialization
+        data.pop('sections', None) # Exclude sentences from serialization
         # data['sections'] = [s.to_dict() for s in self.sections]
         data['dataset_citations'] = [c.to_dict() for c in self.dataset_citations]
         return data
@@ -364,7 +370,7 @@ class MdcFileTextExtractor():
 
     # Data related keywords to look for in the text
     # These keywords help to ensure that the text is relevant to datasets
-    DATA_RELATED_KEYWORDS = ['data release', 'data associated', 'data referring', 'data availability', 'data access', 'data source', 'program data', 'our data', 'the data', 'dataset', 'database', ' segmented by', 'digital elevation model']
+    DATA_RELATED_KEYWORDS = ['data release', 'data associated', 'data referring', 'data availability', 'data access', 'data source', 'program data', 'our data', 'the data', 'dataset', 'database', ' segmented by', 'digital elevation model', 'dna sequences', 'bam files']
 
     REFERENCE_KEYWORDS = ['references','bibliography','works cited','citations','reference list']
 
@@ -470,6 +476,7 @@ class MdcFileTextExtractor():
         # 4. Apply more advanced heuristics to filter out non-author names
         # This step is crucial for accuracy and often requires tuning.
         for author in potential_authors:
+            author = re.sub(r'[,\d[]', ' ', author)
             # Heuristic 1: Filter out names that contain common affiliation keywords.
             # This is a simple check; more robust solutions might use spaCy's dependency
             # parsing to check if a PERSON entity is part of an ORG entity.
@@ -624,7 +631,7 @@ def _read_pdf_plain_text(pdf_filepath, footer_margin=50, header_margin=50):
             for block in blocks:
                 plain_text += str(block[4]).replace('/\n', '/').replace('\n', ' ') + "This is a block break.\n"
             plain_text += "||PAGE||"
-    print(plain_text)
+    # print(plain_text)
     return plain_text
 
 # --- New Mock XML Processing Function ---
