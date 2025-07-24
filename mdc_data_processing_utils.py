@@ -18,6 +18,9 @@ import spacy
 from spacy.language import Language
 from spacy.tokens import Doc, Token
 
+# Import torch for device handling in inference functions
+import torch 
+
 
 # -----------------------------------------
 # Data classes:
@@ -32,16 +35,16 @@ class DatasetCitation:
     max_contet_len: int = 400
     start_sentence_idx: int = 0
     end_sentence_idx: int = 0
-    section_name: Optional[str] = None # Still useful to know the section name
+    section_name: str = "Unknown"
     primary_score: int = 0
     secondary_score: int = 0
     data_score: int = 0
     non_data_score: int = 0
 
     # Class-level constant for typical sections
-    PRIMARY_SCORE_WORDS: ClassVar[List[str]] = [" we ", " our ", "the author", "created", "generated", "deposited", "presented", "made available", "archived", "submitted", "uploaded", "sequenced", "segmented", "vetted", "openly available", "freely available", "data avail", "data access", "dryad", "zenodo"]
+    PRIMARY_SCORE_WORDS: ClassVar[List[str]] = [" we ", " our ", "the author", "created", "generated", "deposited", "presented", "made available", "archived", "submitted", "uploaded", "sequenced", "segmented", "vetted", "openly available", "freely available", "dryad", "zenodo"]
     SECONDARY_SCORE_WORDS: ClassVar[List[str]] = ["accessed", "retrieved", "downloaded", "obtained", "associated", "provided by", "data from", "data used", "publicly available", "available at", "referring", "supplementa", "supporting"]
-    DATA_SCORE_WORDS: ClassVar[List[str]] = ["dataset", "database", "segment", "sequence", "repositor", "archive", "accession", "program", "digital", "model", " dems", "file", "author", "data",]
+    DATA_SCORE_WORDS: ClassVar[List[str]] = ["data avail", "data access", "dataset", "database", "segment", "sequence", "repositor", "archive", "accession", "program", "digital", "model", " dems", "file", "author", "data",]
     # DATA_SCORE_WORDS: ClassVar[List[str]] = ["dataset", "database", "segment", "sequence", "repositor", "archive", "available", "access", "program", "associated", "referring", "supplementa", "supporting", "digital", "model", "file", "author", "data",]
     NON_DATA_SCORE_WORDS: ClassVar[List[str]] = ["bulletin", "journal", "proceedings", "10.1029"]
     # DATA_RELATED_KEYWORDS = ['data release', 'data associated', 'data referring', 'data availability', 'data access', 'data source', 'program data', 'our data', 'the data', 'dataset', 'database', ' segmented by', 'digital elevation model']
@@ -52,28 +55,35 @@ class DatasetCitation:
         Note: 'context' is now expected to be the pre-extracted string.
         'start_sentence_idx' and 'end_sentence_idx' are metadata about its location.
         """
-        self.citation_sentence = sentence
-        if context:
-            # Replace newlines with spaces, remove brackets, and normalize whitespace
-            context = context.replace('\n', ' ').replace('[', '').replace(']', '')
-            context = re.sub(r'\s+', ' ', context.strip())
+        if sentence and context:
+            self.citation_sentence = sentence
             self.citation_context = context[-self.max_contet_len:] # Limit to last 400 characters
             self.start_sentence_idx = start_sentence_idx
             self.end_sentence_idx = end_sentence_idx
-            self.primary_score = self.score_context(context, DatasetCitation.PRIMARY_SCORE_WORDS)
-            self.secondary_score = self.score_context(context, DatasetCitation.SECONDARY_SCORE_WORDS)
-            self.data_score = self.score_context(context, DatasetCitation.DATA_SCORE_WORDS)
-            self.non_data_score = self.score_context(context, DatasetCitation.NON_DATA_SCORE_WORDS)
 
-    def score_context(self, context: str, score_words: list[str]) -> int:
+    def score_citation(self):
+            self.primary_score = self._calculate_score(DatasetCitation.PRIMARY_SCORE_WORDS)
+            self.secondary_score = self._calculate_score(DatasetCitation.SECONDARY_SCORE_WORDS)
+            self.data_score = self._calculate_score(DatasetCitation.DATA_SCORE_WORDS)
+            self.non_data_score = self._calculate_score(DatasetCitation.NON_DATA_SCORE_WORDS)
+
+    def _calculate_score(self, score_words: list[str]) -> int:
         score = 0
-        context_lower = context.lower()
+        context_lower = self.citation_context.lower()
         for keyword in score_words:
             score += context_lower.count(keyword)
 
+        if score_words == DatasetCitation.SECONDARY_SCORE_WORDS:
+            ref_sec_score = 1 if self.is_in_reference_section() else 0
+            score += ref_sec_score
+
         # Check for pattern that looks like page numbers e.g. 758-792
         if score_words == DatasetCitation.NON_DATA_SCORE_WORDS:
-            score += len(re.findall(r'\d{2,5}-\d{2,5}', context_lower))
+            ref_sec_score = 3 if self.is_in_reference_section() else 0
+            page_numbers_found = len(re.findall(r',\s+\d{2,5}-\d{2,5}', context_lower))
+            if page_numbers_found > 0:
+                score += page_numbers_found + ref_sec_score
+                # print(f"dataset_id={self.dataset_id}, score={score}, ref_sec_score={ref_sec_score}, page_numbers_found={page_numbers_found}")
         return score
     
     def get_total_score(self) -> int:
@@ -96,6 +106,9 @@ class DatasetCitation:
     
     def is_accession_number(self)-> bool:
         return not self.is_doi()
+
+    def is_in_reference_section(self)-> bool:
+        return self.section_name in ArticleSection.REFERENCE_SECTIONS
     
     def has_dataset(self) -> bool:
         """Returns True if there are both dataset IDs and citation context."""
@@ -119,6 +132,11 @@ class ArticleSection:
         "Data Availability", "Data Availability Statement", 
         "Data Accessibility", "Data Accessibility Statement",
         "Results", "Discussion", "Conclusions", "Acknowledgments", 
+        "References", "Bibliography", "Appendix", 
+        "Citations", "Works Cited", "Reference List"
+    ]
+
+    REFERENCE_SECTIONS: ClassVar[List[str]] = [
         "References", "Bibliography", "Appendix", 
         "Citations", "Works Cited", "Reference List"
     ]
@@ -149,6 +167,8 @@ class ArticleData:
     sections: List[ArticleSection] = field(default_factory=list)
     dataset_citations: List[DatasetCitation] = field(default_factory=list)
 
+    PRIMARY_DATA_SOURCES: ClassVar[List[str]] = ["dryad", "zenodo"]
+
     def __post_init__(self):
         # Custom initialization
         if self.article_id and not self.article_doi:
@@ -166,7 +186,7 @@ class ArticleData:
             existing_ids = ",".join({d.dataset_id.lower() for d in self.dataset_citations})
             # Don't include partial dataset_ids
             if ds_id_lower not in existing_ids:
-                self._assign_citation_to_section(dataset_citation)
+                self._assign_citation_to_section_and_score(dataset_citation)
                 self._update_citation_primary_score(dataset_citation)
                 self.dataset_citations.append(dataset_citation)
         
@@ -183,17 +203,48 @@ class ArticleData:
         if doi.is_primary():
             self.dataset_citations = self.get_doi_citations()
 
-    def get_data_for_llm(self) -> list[dict[str, str]]:
-        data_for_llm: list[dict[str, str]] = []
+    def deduplicate_citations_by_section_and_score(self):
+        """
+        Deduplicates dataset citations within the ArticleData object.
+        For citations found in the same ArticleSection, only the one with the
+        highest primary_score is retained. If scores are tied, the citation
+        that was encountered first for that section is preferred.
+        """
+        best_citations_per_section: Dict[str, DatasetCitation] = {}
+
+        for citation in self.dataset_citations:
+            section_name = citation.section_name
+            if section_name is None:
+                continue
+
+            if section_name not in best_citations_per_section:
+                # This is the first citation encountered for this section, so it's the best so far.
+                best_citations_per_section[section_name] = citation
+            else:
+                # Compare with the current best citation for this section
+                current_best = best_citations_per_section[section_name]
+                if citation.primary_score > current_best.primary_score:
+                    # If the new citation has a strictly higher primary_score, it becomes the new best.
+                    best_citations_per_section[section_name] = citation
+
+        # Update the article's dataset_citations list with the deduplicated results
+        self.dataset_citations = list(best_citations_per_section.values())
+        
+    def get_data_for_llm(self) -> list[dict[str, str | int]]:
+        data_for_llm: list[dict[str, str | int]] = []
         for citation in self.dataset_citations:
             # Convert to dict for LLM training data
             data_for_llm.append(
                 {
                     "article_id": self.article_id,
-                    "article_doi": self.article_doi,
+                    "article_author": self.author,
                     "article_abstract": self.abstract,
                     "dataset_id": citation.dataset_id,                    
                     "citation_context": citation.citation_context,
+                    "article_section": citation.section_name,
+                    "primary_score": citation.primary_score,
+                    "secondary_score": citation.secondary_score,
+                    "non_data_score": citation.non_data_score,
                     "label": citation.citation_type if citation.citation_type else ""
                 }
             )
@@ -207,8 +258,8 @@ class ArticleData:
         Args:
             sentence_data: A list of tuples, where each tuple is (sentence_text, start_char_idx, end_char_idx).
         """
-        sentences = [sent.text.replace('This is a block break.', '').replace('||PAGE||', '') for sent in nlp_sentences]
-        self.sentences = [s for s in sentences if s != ""]
+        sentences = [sent.text.replace('This is a block break.', '').replace('||PAGE||', '').strip() for sent in nlp_sentences]
+        self.sentences = [s for s in sentences if s != '']
                 
         # After setting sentences, identify sections based on them
         self._identify_sections()
@@ -275,21 +326,7 @@ class ArticleData:
                     return section
         return None # Not found in any defined section
 
-    def assign_citations_to_sections(self):
-        """
-        Iterates through stored DatasetCitations and assigns them to their respective sections
-        based on sentence indices.
-        """
-        for citation in self.dataset_citations:
-            # Use the start_sentence_idx of the citation to find its containing section
-            containing_section = self.find_section_for_sentence_index(citation.end_sentence_idx)
-            if containing_section:
-                citation.section_name = containing_section.name
-                # No section_start_char_idx to assign here
-            else:
-                citation.section_name = "Unknown"
-
-    def _assign_citation_to_section(self, citation: DatasetCitation):
+    def _assign_citation_to_section_and_score(self, citation: DatasetCitation):
         """
         Iterates through stored DatasetCitations and assigns them to their respective sections
         based on sentence indices.
@@ -300,8 +337,11 @@ class ArticleData:
             citation.section_name = containing_section.name
         else:
             citation.section_name = "Unknown"
+        citation.score_citation()
 
     def _update_citation_primary_score(self, citation: DatasetCitation):
+        data_source_score = len([ds for ds in ArticleData.PRIMARY_DATA_SOURCES if ds in citation.dataset_id])
+        citation.primary_score += data_source_score
         if self.author:
             id_idx = citation.citation_context.find(citation.dataset_id)
             author_names = self.author.split()
@@ -310,6 +350,16 @@ class ArticleData:
                 if name_idx > 0 and name_idx < id_idx:
                     citation.primary_score += 2
 
+    def clean_up(self):
+        """
+        Clears large in-memory components (like raw sentences) after
+        all necessary processing (sectioning, citation context) is done.
+        This reduces the memory footprint of the ArticleData object
+        when stored in a list for subsequent steps like inference.
+        """
+        self.sentences = [] # Clear the list of sentence strings
+        self.sections = []  # Clear the list of sections
+
     def to_dict(self):
         """
         Converts the ArticleData object to a dictionary for serialization,
@@ -317,7 +367,7 @@ class ArticleData:
         """
         data = asdict(self)
         data.pop('sentences', None) # Exclude sentences from serialization
-        data.pop('sections', None) # Exclude sentences from serialization
+        data.pop('sections', None) # Exclude sections from serialization
         data['sections'] = [s.to_dict() for s in self.sections]
         data['dataset_citations'] = [c.to_dict() for c in self.dataset_citations]
         return data
@@ -415,6 +465,7 @@ class MdcFileTextExtractor():
 
     NON_STD_UNICODE_DASHES = re.compile(r'[\u2010\u2011\u2012\u2013\u2014]')
     NON_STD_UNICODE_TICKS = re.compile(r'[\u201c\u201d\u2019]')
+    NON_STD_ZERO_WIDTH_SPACE = re.compile(r'\u200b')
 
     def __init__(self, file_path: str):
         self.file_path = file_path
@@ -434,16 +485,8 @@ class MdcFileTextExtractor():
         """
         if not text:
             return ""
-        # Replace all non-standard unicode dashes with '-' and ticks with "'"
-        text = MdcFileTextExtractor.NON_STD_UNICODE_DASHES.sub('-', text)
-        text = MdcFileTextExtractor.NON_STD_UNICODE_TICKS.sub("'", text)
 
-        # Fix known formatting issues
-        text = text.replace('\u200b', '').replace('-\n', '-').replace('_\n', '_').replace('/\n', '/').replace(', ... ', ', ')
-        text = text.replace('dryad.\n', 'dryad.').replace('doi.\norg', 'doi.org')
-        text = text.replace('doi.org/10.\n', 'doi.org/10.').replace('http://dx.doi.org/10.', 'https://doi.org/10.')
         # Remove extra whitespace
-        # return re.sub(r' {2,}', ' ', text).strip()
         return re.sub(r'\s+', ' ', text).strip()
     
     def is_text_data_related(self, text: str) -> bool:
@@ -596,7 +639,7 @@ class MdcFileTextExtractor():
             citation = self.populate_context_around_citation(article_data, citation)
             article_data.add_dataset_citation(citation)
 
-        article_data.assign_citations_to_sections()
+        article_data.clean_up()
         return article_data
 
     def extract_article_data_for_inference(self, full_text: str, nlp: Language) -> ArticleData:
@@ -611,8 +654,8 @@ class MdcFileTextExtractor():
                 citation = self.populate_context_around_citation(article_data, citation)
                 article_data.add_dataset_citation(citation)
 
-        article_data.assign_citations_to_sections()
-        article_data.remove_extraneous_citations()
+        # article_data.remove_extraneous_citations()
+        article_data.clean_up()
         return article_data
 
     def find_potential_dataset_ids(self, text: str) -> list[str]:
@@ -660,13 +703,22 @@ def _read_pdf_plain_text(pdf_filepath, footer_margin=50, header_margin=50):
             # Sort by horizontal direction then by ascending vertical to handle multi column layouts.
             blocks.sort(key=lambda b: (int(b[0]), int(b[1])))
             for block in blocks:
-                plain_text += str(block[4]).replace('/\n', '/').replace('\n', ' ') + "This is a block break.\n"
+                text =str(block[4]).replace(', ... ', ', ')
+                # Replace non-standard unicode characters
+                text = MdcFileTextExtractor.NON_STD_ZERO_WIDTH_SPACE.sub('', text)
+                text = MdcFileTextExtractor.NON_STD_UNICODE_DASHES.sub('-', text)
+                text = MdcFileTextExtractor.NON_STD_UNICODE_TICKS.sub("'", text)
+                text = re.sub(r'(\.)(\d{1,2}\s+)([A-Z])', r'\g<1> \g<3>', text)
+                text = text.replace('-\n', '-').replace('_\n', '_').replace('/\n', '/').replace(' and\n', ' and ')
+                text = text.replace('//doi.\n', '//doi.').replace('//doi.org/10.\n', '//doi.org/10.')
+                text = text.replace('/dryad.\n', '/dryad.').replace('/zenodo.\n', '/zenodo.')
+                if text.endswith('\n'):
+                    plain_text += text.replace('\n', ' ') + "This is a block break.\n"
+                else:
+                    plain_text += text.replace('\n', ' ')
             plain_text += "||PAGE||"
-    # 
-    # Handle doi's that may be split by periods
-    plain_text = plain_text.replace('//doi. This is a block break.\norg/10', '//doi.org/10').replace('//doi.org/10. This is a block break.\n', '//doi.org/10.')
-    plain_text = plain_text.replace('/dryad. This is a block break.\n', '/dryad.').replace('/zenodo. This is a block break.\n', '/zenodo.')
-    plain_text = plain_text.replace('- This is a block break.\n', '').replace('and  This is a block break.\n', 'and ')
+
+    plain_text = plain_text.replace('http://dx.doi.org/10.', 'https://doi.org/10.').replace(' This is a block break.\n/', '/')
     # print(plain_text)
     return plain_text
 
@@ -746,6 +798,95 @@ def _generic_file_worker(filepath: str, output_dir: str, nlp: Language, ground_t
         print(f"  [Generic Worker] Error processing or saving result for {base_name}: {e}")
         return None
 
+# --- New Inference-specific functions (moved from notebook) ---
+def format_citation_prompt_for_inference(tokenizer: Any, article_data: ArticleData, dataset_citation: DatasetCitation):
+    """
+    Formats a single citation into a ChatML prompt for inference.
+    """
+    messages = [
+        {"role": "system", "content": "You are an expert assistant for classifying research article data citations. /no_think"},
+        {"role": "user", "content": (
+            f"""
+Given the following article information and a specific data citation ('Dataset ID' and 'Data Citation Context' combination) within that article, classify the data citation as **one** of the following: 
+* **'Primary'**: If the data citation refers to raw or processed **data created/generated as part of the paper**, specifically for this study. (Hint: use the 'Primary Score' and 'Article Author' as a guide). 
+* **'Secondary'**: If the data citation refers to raw or processed **data derived/reused from existing records** or previously published data. (Hint: use the 'Secondary Score' and 'Article Section' as a guide). 
+* **'Missing'**: If the data citation refers to another **article/paper/journal**, a **figure, software, or other non-data entity**.  (Hint: use the 'Missing Score' and 'Article Section' as a guide).\n\n"""
+            f"Now, classify the following:\n\n" 
+            f"Article Author: {article_data.author}\n" 
+            f"Article Abstract: {article_data.abstract}\n" 
+            f"Article Section: {dataset_citation.section_name}\n" 
+            f"Dataset ID: {dataset_citation.dataset_id}\n"                
+            f"Data Citation Context: {dataset_citation.citation_context}\n\n"
+            f"Primary Score: {dataset_citation.primary_score}\n\n"
+            f"Secondary Score: {dataset_citation.secondary_score}\n\n"
+            f"Missing Score: {dataset_citation.non_data_score}\n\n"
+            f"Classification:"
+        )}
+    ]
+
+    input_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    inputs = tokenizer(input_text, return_tensors="pt", max_length=512, truncation=True)
+    return inputs
+
+def invoke_model_for_inference(tokenizer: Any, model: Any, article_data: ArticleData, device: Any) -> list[SubmissionData]:
+    """
+    Invokes the LLM for inference on all dataset citations within a single ArticleData object.
+    """
+    submission_data_list = []
+    article_id = article_data.article_id
+    dataset_citations = article_data.dataset_citations
+    
+    # If no citations are found after initial processing and filtering, add a "Missing" entry
+    if not dataset_citations:
+        submission_data_list.append(SubmissionData(article_id, dataset_id="Missing", type="Missing", context=""))
+        return submission_data_list
+
+    for dc in dataset_citations:
+        inputs = format_citation_prompt_for_inference(tokenizer, article_data, dc)
+        # Move inputs to the correct device here, as each thread will handle its own inputs
+        inputs = {k: v.to(device) for k, v in inputs.items()}
+
+        # Ensure model is in evaluation mode (important for inference)
+        model.eval() 
+
+        with torch.no_grad():
+            output = model.generate(
+                **inputs,
+                max_new_tokens=10,
+                do_sample=True,
+                temperature=0.7,
+                top_p=0.9,
+                top_k=50,
+                pad_token_id=tokenizer.eos_token_id,
+                eos_token_id=tokenizer.eos_token_id
+            )
+
+        generated_text = tokenizer.decode(output[0][inputs['input_ids'].shape[1]:], skip_special_tokens=True).strip()
+        
+        predicted_type = "Missing"
+        if "Primary" in generated_text:
+            predicted_type = "Primary"
+        elif "Secondary" in generated_text:
+            predicted_type = "Secondary"
+        
+        submission_data_list.append(SubmissionData(article_id, dataset_id=dc.dataset_id, type=predicted_type, context=dc.citation_context))
+
+    return submission_data_list
+
+# --- New worker function for concurrent model inference ---
+def _inference_worker_task(article_data: ArticleData, tokenizer: Any, model: Any, device: Any) -> list[SubmissionData]:
+    """
+    Worker function for concurrent model inference on a single ArticleData object.
+    This function is designed to be submitted to a ThreadPoolExecutor.
+    """
+    try:
+        return invoke_model_for_inference(tokenizer, model, article_data, device)
+    except Exception as e:
+        print(f"Error during inference for {article_data.article_id}: {e}")
+        # Return a SubmissionData with "Missing" type for error cases
+        return [SubmissionData(article_data.article_id, dataset_id="Error", type="Missing", context=f"Inference error: {e}")]
+
+
 # --- Concurrent File Processor Class ---
 class ConcurrentFileProcessor:
     def __init__(self, nlp: Language, output_dir="processed_files", max_workers=3):
@@ -785,7 +926,7 @@ class ConcurrentFileProcessor:
         print(f"Inference Data processing finished in {end_time - start_time:.2f} seconds.")
         return article_data_list
 
-    def process_files_for_training(self, filepaths: list[str], ground_truth_list_of_lists: list[list[dict]]):
+    def process_files_for_training(self, filepaths: list[str], ground_truth_list_of_lists: list[list[dict]]) -> list[dict[str, str | int]]:
         """
         Processes files concurrently using ThreadPoolExecutor.
         Uses a specified processing_logic_func for each file.
@@ -795,7 +936,7 @@ class ConcurrentFileProcessor:
 
         print("\n--- Starting Concurrent File Processing For Training Data ---")
         start_time = time.time()
-        training_data_for_llm: list[dict[str, str]] = [] # This will be a list of LlmTrainingData from the training dataset
+        training_data_for_llm: list[dict[str, str | int]] = [] # This will be a list of LlmTrainingData from the training dataset
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             futures = {
                 executor.submit(_generic_file_worker, filepath, train_out_dir, self.nlp, ground_truth_list_of_lists[i]): (i, filepath)
@@ -814,3 +955,32 @@ class ConcurrentFileProcessor:
         end_time = time.time()
         print(f"Training Data processing finished in {end_time - start_time:.2f} seconds.")
         return training_data_for_llm
+
+    def run_inference_concurrently(self, article_data_list: list[ArticleData], tokenizer: Any, model: Any, device: Any) -> list[SubmissionData]:
+        """
+        Runs model inference concurrently on a list of pre-processed ArticleData objects.
+        """
+        print("\n--- Starting Concurrent Model Inference ---")
+        start_time = time.time()
+        all_submission_data: list[SubmissionData] = []
+
+        # Use a new ThreadPoolExecutor for inference
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = {
+                executor.submit(_inference_worker_task, ad, tokenizer, model, device): ad.article_id
+                for ad in article_data_list
+            }
+
+            for future in tqdm(as_completed(futures), total=len(article_data_list), desc="Running Inference"):
+                article_id = futures[future]
+                try:
+                    submission_data_for_article = future.result()
+                    all_submission_data.extend(submission_data_for_article)
+                except Exception as exc:
+                    print(f'Inference for {article_id} generated an unhandled exception: {exc}')
+                    # Add a "Missing" entry for this article if an error occurs
+                    all_submission_data.append(SubmissionData(article_id, dataset_id="Error", type="Missing", context=f"Unhandled inference error: {exc}"))
+        
+        end_time = time.time()
+        print(f"Concurrent model inference finished in {end_time - start_time:.2f} seconds.")
+        return all_submission_data
